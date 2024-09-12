@@ -36,6 +36,9 @@ class Calc_Atom:
 
 
 if __name__ == "__main__":
+    protein1 = ("2C8Q","./Data/insuline.pdb")
+    list_atome = PDBRetrieve_Atoms(protein1[0],protein1[1])
+    
     new_liste_atom = []
     for grp_atom in list_atome:
         for atome in grp_atom:

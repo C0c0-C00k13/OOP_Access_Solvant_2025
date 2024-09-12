@@ -1,8 +1,5 @@
-# Algo de Saff Kuilaars : génération de sphere-atome à 92 pts
 import numpy as np
-import matplotlib.pyplot as plt
-# mpl_toolkits
-from mpl_toolkits.mplot3d import Axes3D
+import Point
 
 def saff_kuijlaars_points(N):
     """
@@ -32,32 +29,36 @@ def saff_kuijlaars_points(N):
     return points
 
 
-def plot_sphere(points):
-    """
-    Affiche les points sur une sphère à l'aide de Matplotlib.
-    
-    Args:
-        points (ndarray): Tableau (N, 3) des coordonnées des points.
-    """
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    
-    # Extraire les coordonnées x, y, z
-    x = points[:, 0]
-    y = points[:, 1]
-    z = points[:, 2]
-    
-    # Tracé des points
-    ax.scatter(x, y, z, color='b', s=20)
-    
-    # Configuration des limites pour une sphère unitaire
-    ax.set_xlim([-1, 1])
-    ax.set_ylim([-1, 1])
-    ax.set_zlim([-1, 1])
-    
-    plt.show()
+if __name__ == "__main__":
+    protein1 = ("2C8Q","./Data/insuline.pdb")
 
-# Exemple d'utilisation
-N = 92  # Nombre de points à générer
-points = saff_kuijlaars_points(N)
-plot_sphere(points)
+    #Recupération des atomes
+    list_atome = PDBRetrieve_Atoms(protein1[0],protein1[1])
+
+    # Génération de la classe atome définie par Atom.py
+    new_liste_atom = []
+    for grp_atom in list_atome:
+        for atome in grp_atom:
+            # print(f"Coordonnées : {atome.coord}; Full name : {atome.fullname}; Element : {atome.element}")
+            new_atom = Calc_Atom(atome.fullname, atome.element, atome.coord)
+            new_liste_atom.append(new_atom)
+    new_liste_atom[0]
+    atome1, atome2 = new_liste_atom[0], new_liste_atom[1]
+
+    # Génération de points à l'aide de l'algorithme de Saff & Kuijlaars
+    points = saff_kuijlaars_points(92)
+    
+    # Test sur 1 atome
+    print(f"Index\tCoordonnées initial\tCordonnées centrées")
+    for index,coord in enumerate(points):
+        print(f"{index}\t{coord[0:3]}\t{coord[0:3]+[atome1.x,atome1.y,atome1.z]}")
+
+    # Test sur tout les atomes
+    liste_point_coord = []
+    for atome in new_liste_atom:
+        for coord in points:
+            new_point = point_atome(atom_center= atome, x_pt= coord[0]+atome.x, y_pt= coord[1]+atome.y, z_pt= coord[2]+atome.z)
+            liste_point_coord.append(new_point)
+            
+    print(len(liste_point_coord),liste_point_coord)
+
