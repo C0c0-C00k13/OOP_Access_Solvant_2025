@@ -1,4 +1,4 @@
-Cerépertoire contient l'ensembledes scripts et documents utilisés pour réaliser le calcul de surface de protéine exposée au solvant.
+Ce répertoire contient l'ensemble des scripts et documents utilisés pour réaliser le calcul de surface de protéine exposée au solvant.
 
 Le projet a été réalisé dans un environnement conda sous un système Linux.
 

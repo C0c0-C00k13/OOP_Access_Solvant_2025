@@ -6,7 +6,7 @@ from Bio.PDB import PDBParser
 from Bio.PDB import Structure
 from Bio.PDB import Atom
 from Bio.PDB import NACCESS
-
+import datetime
 
 def PDBRetrieve_Residus(id_prot, filename):
     """
@@ -190,6 +190,9 @@ def Exposition_point_par_solvant(list_atome):
     #         print(atome,len(atome.liste_points_solvant))
 
 if __name__ == "__main__":
+
+    # Affichage de la date : nom du dossier
+    # datetime.datetime.now().strftime("%d-%m-%Y")
     
     protein1 = ("","./Data/insuline.pdb")
     print("Début de lecture du fichier PDB.")
