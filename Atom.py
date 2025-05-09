@@ -58,7 +58,7 @@ class Atom:
 if __name__ == "__main__":
 
     # Display the current date of run
-    today = datetime.datetime.now().strftime("%d-%m-%Y")
+    today = datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
     FILE = "Data/2c8r.pdb"
     # Checking if the file exists
     IS_EXIST = os.path.exists(FILE)
@@ -73,10 +73,10 @@ if __name__ == "__main__":
     with open(FILE, "r") as pdb_file:
         for line in pdb_file:
             if line.startswith("ATOM"):
-                print(line.strip().split())
-                # index = line.split("\t")[1]
-                # position = line.split("\t")[-6:-4]
-                # element = line.split("\t")[-1]
-                # print(f"Index:{index}; Position:{position}; Element:{element}")
+                # print(line.strip().split())
+                index = line.strip().split()[1]
+                position = line.strip().split()[-6:-3]
+                element = line.strip().split()[-1]
+                print(f"Index:{index}; Position:{position}; Element:{element}")
     print("Done")
                 
