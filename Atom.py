@@ -51,6 +51,8 @@ class Atom:
         """Compute Euclidean distance to another Atom."""
         return np.linalg.norm(self.position - other.position)
 
+    # def __(self):
+
     def __repr__(self):
         return f"Atom({self.index}, {self.element}, ASA={self.asa:.2f})"
 
@@ -74,9 +76,17 @@ if __name__ == "__main__":
         for line in pdb_file:
             if line.startswith("ATOM"):
                 # print(line.strip().split())
-                index = line.strip().split()[1]
-                position = line.strip().split()[-6:-3]
+                # Index
+                index = int(line.strip().split()[1])
+                # Coordinates
+                coord_z = float(line.strip().split()[-6])
+                coord_y = float(line.strip().split()[-5])
+                coord_x = float(line.strip().split()[-4])
+                position = (coord_x,coord_y,coord_y)
+                # Element
                 element = line.strip().split()[-1]
-                print(f"Index:{index}; Position:{position}; Element:{element}")
+                # print(f"Index:{index}; Position:{position}; Element:{element}")
+                atom = Atom(element=element,position=position,index=index)
+                print(atom.__dict__)
     print("Done")
                 
