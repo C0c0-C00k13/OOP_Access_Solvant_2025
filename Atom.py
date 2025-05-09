@@ -13,6 +13,11 @@ Each Atom includes:
 
 The Atom class provides methods for computing distances and easy representation.
 """
+
+import os
+import sys
+import time
+import datetime
 import numpy as np
 
 # Dictionary of van der Waals radii (in Ångströms)
@@ -50,4 +55,28 @@ class Atom:
         return f"Atom({self.index}, {self.element}, ASA={self.asa:.2f})"
 
 
+if __name__ == "__main__":
 
+    # Display the current date of run
+    today = datetime.datetime.now().strftime("%d-%m-%Y")
+    FILE = "Data/2c8r.pdb"
+    # Checking if the file exists
+    IS_EXIST = os.path.exists(FILE)
+    print(f"Date of execution : {today}")
+    if not IS_EXIST:
+        print("This file does not exist. Please check the file path.\
+            \nExit")
+        sys.exit()
+    # In case the file is found
+    print(f"File found: {FILE}. Opening now")
+    time.sleep(2)
+    with open(FILE, "r") as pdb_file:
+        for line in pdb_file:
+            if line.startswith("ATOM"):
+                print(line.strip().split())
+                # index = line.split("\t")[1]
+                # position = line.split("\t")[-6:-4]
+                # element = line.split("\t")[-1]
+                # print(f"Index:{index}; Position:{position}; Element:{element}")
+    print("Done")
+                
