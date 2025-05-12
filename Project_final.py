@@ -3,8 +3,8 @@
 import numpy as np
 import Bio
 from Bio.PDB import PDBParser
-from Bio.PDB import Structure
-from Bio.PDB import Atom
+# from Bio.PDB import Structure
+import Atom
 from Bio.PDB import NACCESS
 import datetime
 
