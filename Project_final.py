@@ -8,6 +8,7 @@ import Atom
 from Bio.PDB import NACCESS
 import datetime
 
+
 def PDBRetrieve_Residus(id_prot, filename):
     """
     Fonction permettant de récupere les résidus d'une protéine

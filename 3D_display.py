@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.animation import FuncAnimation
 
+
 def generate_sphere_points(n_points):
     """
     Generates approximately uniform points on a unit sphere using the Fibonacci lattice.
