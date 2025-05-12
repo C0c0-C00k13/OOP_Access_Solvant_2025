@@ -14,6 +14,7 @@ Each Atom includes:
 The Atom class provides methods for computing distances and easy representation.
 """
 
+
 import os
 import sys
 import time
