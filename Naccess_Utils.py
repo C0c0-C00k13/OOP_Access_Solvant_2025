@@ -1,6 +1,43 @@
 import numpy as np
 from math import acos, atan2, sqrt, pi
 
+def vguess(atom: str) -> float:
+    """
+    Guess the van der Waals radius for a given atom name.
+
+    Parameters:
+        atom (str): A 4-character string representing the atom name.
+
+    Returns:
+        float: Guessed van der Waals radius.
+    """
+    atom = atom.ljust(4)  # Ensure it's at least 4 characters
+    vdw = 1.80  # default guess
+
+    if atom[1] == 'C':
+        vdw = 1.80
+    if atom[1] == 'N':
+        vdw = 1.60
+    if atom[1] == 'S':
+        vdw = 1.85
+    if atom[1] == 'O':
+        vdw = 1.40
+    if atom[1] == 'P':
+        vdw = 1.90
+    if atom[:2] == 'CA':
+        vdw = 2.07
+    if atom[:2] == 'FE':
+        vdw = 1.47
+    if atom[:2] == 'CU':
+        vdw = 1.78
+    if atom[:2] == 'ZN':
+        vdw = 1.39
+    if atom[:2] == 'MG':
+        vdw = 1.73
+
+    return vdw
+
+
 def chain(c, names):
     """
     Return integer number of chain assigned from the single-letter ID.
@@ -412,3 +449,253 @@ def solva(nats, xyz, rads, probe, zslice, nac, ncube, nint):
 
     print("SOLVA: PROGRAM ENDS CORRECTLY")
     return accs
+
+
+def sortag(a):
+    """
+    Sorts the list `a` in ascending order and returns the original indices in `tag`.
+    This replicates the behavior of the Fortran `sortag` subroutine.
+    
+    Parameters:
+    a (list of float): The array to sort.
+
+    Returns:
+    tuple: (sorted_a, tag) where `sorted_a` is the sorted version of `a` and
+           `tag` is a list of the original indices corresponding to the sorted elements.
+    """
+    n = len(a)
+    tag = list(range(n))
+    a_tagged = list(zip(a, tag))
+
+
+    sorted_tagged = quicksort_with_tag(a_tagged)
+    sorted_a = [x[0] for x in sorted_tagged]
+    sorted_tag = [x[1] for x in sorted_tagged]
+    
+    return sorted_a, sorted_tag
+
+
+def quicksort_with_tag(arr):
+    if len(arr) <= 1:
+        return arr
+    pivot = arr[len(arr) // 2][0]
+    left = [x for x in arr if x[0] < pivot]
+    middle = [x for x in arr if x[0] == pivot]
+    right = [x for x in arr if x[0] > pivot]
+    return quicksort_with_tag(left) + middle + quicksort_with_tag(right)
+
+
+def summer(
+    sname,
+    nats,
+    accs,
+    backbone,
+    polstats,
+    rtype,
+    resindex,
+    resnam,
+    ressums,
+    tsums,
+    readstring,
+    fopen,
+    maxr,
+    maxs,
+    maxx
+):
+    """
+    Summarize atomic accessibilities by residue.
+    
+    Parameters are assumed to be consistent with Fortran-style data
+    (e.g., `accs`, `backbone`, `resindex`, etc. as lists of length `nats`).
+    """
+    stand = False
+    standarea = [[0.0] * 7 for _ in range(maxr)]
+    acids = [''] * maxr
+    rindex = [0] * maxx
+
+    # Try to open the standard accessibility file
+    if fopen(1, sname, len(sname), 'old') != 0:
+        print(f'REM  Relative accessibilites read from external file "{sname}"', file=open(3, 'a'))
+        stand = True
+        i = 0
+        while True:
+            line, ilen = readstring(1)
+            if line is None or i >= maxr:
+                break
+            if line[0:4] == 'ATOM':
+                acids[i] = line[12:15]
+                standarea[i][0] = float(line[16:23])
+                standarea[i][1] = float(line[29:36])
+                standarea[i][2] = float(line[42:49])
+                standarea[i][3] = float(line[55:62])
+                standarea[i][4] = float(line[68:75])
+                standarea[i][5] = float(line[81:88])
+                standarea[i][6] = float(line[94:108])
+                i += 1
+        with open(4, 'a') as f:
+            f.write(f' RELATIVE (STANDARD) ACCESSIBILITIES READFOR {i:3d} AMINO ACIDS\n')
+    else:
+        with open(4, 'a') as f:
+            f.write(' NO STANDARD VALUES INPUT\n')
+
+    nacids = i
+
+    for i in range(resindex[nats - 1]):
+        rindex[i] = 0
+        if stand:
+            res = resnam[i][:3]
+            ok, ires = which3(res, acids, nacids)
+            if ok:
+                rindex[i] = ires
+
+    # Initialize tsums and ressums if not already
+    for i in range(len(tsums)):
+        tsums[i] = 0.0
+
+    for i in range(nats):
+        ir = resindex[i]
+        acc = accs[i]
+        tsums[0] += acc
+        ressums[ir][0][0] += acc
+
+        if backbone[i] == 0:
+            ressums[ir][4][0] += acc
+            tsums[4] += acc
+        else:
+            ressums[ir][3][0] += acc
+            tsums[3] += acc
+            if polstats[i] == 0:
+                ressums[ir][1][0] += acc
+                tsums[1] += acc
+            elif polstats[i] == 1:
+                ressums[ir][2][0] += acc
+                tsums[2] += acc
+
+        if polstats[i] == 0:
+            ressums[ir][5][0] += acc
+            tsums[5] += acc
+        else:
+            ressums[ir][6][0] += acc
+            tsums[6] += acc
+
+    for i in range(resindex[nats - 1]):
+        ires = rindex[i]
+        if stand and ires != 0:
+            for j in range(7):
+                if standarea[ires][j] > 0.0:
+                    ressums[i][j][1] = 100.0 * ressums[i][j][0] / standarea[ires][j]
+                else:
+                    ressums[i][j][1] = 0.0
+        else:
+            for j in range(7):
+                ressums[i][j][1] = -99.9
+
+
+def polguess(atom):
+    """
+    Guess polarity based on the second character of the atom name.
+
+    Args:
+        atom (str): Atom name, expected to be at least 2 characters long.
+
+    Returns:
+        int: 1 if the atom is polar (second char is 'O', 'N', or 'A'), else 0.
+    """
+    if len(atom) >= 2 and atom[1] in ('O', 'N', 'A'):
+        return 1
+    return 0
+
+
+def what_atom(atom: str, ir: int, n: int) -> int:
+    """
+    Determine if the given atom matches standard main chain or nucleotide atoms.
+
+    Args:
+        atom (str): Atom name (4 characters expected, padding if needed).
+        ir (int): Residue type indicator (1 for protein, 2 for nucleotide, others for general).
+        n (int): Number of atoms in main chain (used for ir == 1 case).
+
+    Returns:
+        int: 0 if atom is recognized as standard, 1 otherwise.
+    """
+    mc = [' N  ', ' C  ', ' O  ', ' OXT', ' CA ']
+    nc = [' P  ', ' O1P', ' O2P', ' O5*', ' C5*', ' C4*',
+          ' O4*', ' C3*', ' O3*', ' C2*', ' C1*']
+
+    if ir == 1:
+        for i in range(n):
+            if atom == mc[i]:
+                return 0
+    elif ir == 2:
+        for i in range(11):
+            if atom == nc[i]:
+                return 0
+    else:
+        for i in range(4):
+            if atom == mc[i]:
+                return 0
+        for i in range(11):
+            if atom == nc[i]:
+                return 0
+
+    return 1
+
+
+def vanin(
+    vname: str,
+    vlen: int,
+    nacids: list,
+    aacids: list,
+    anames: list,
+    numats: list,
+    vradii: list,
+    spolar: list,
+    rtype: list,
+    maxr: int,
+    maxa: int
+):
+    try:
+        with open(vname[:vlen], 'r') as f:
+            nacids_val = 0
+            for line in f:
+                card = line.rstrip('\n')
+                ilen = len(card.rstrip())
+                n, c, l = parse(card, ilen, ' ')
+                if c[0] == 'RESIDUE':
+                    nacids_val += 1
+                    if nacids_val > maxr:
+                        raise RuntimeError("ERROR: increase maxr")
+                    rtype_val = 1
+                    if c[1][:4] == 'NUCL':
+                        rtype_val = 2
+                    elif c[1][:4] == 'HETA':
+                        rtype_val = 3
+                    rtype[nacids_val - 1] = rtype_val
+
+                    aa3 = c[2][:3].replace('_', ' ')
+                    aacids[nacids_val - 1] = aa3
+                    numats[nacids_val - 1] = 0
+
+                elif c[0] == 'ATOM':
+                    idx = nacids_val - 1
+                    numats[idx] += 1
+                    if numats[idx] > maxa:
+                        raise RuntimeError("ERROR: increase maxa")
+
+                    atom_name = card[5:9].replace('_', ' ')
+                    anames[idx][numats[idx] - 1] = atom_name
+
+                    vrad = readfloat(card[10:14], 4)
+                    vradii[idx][numats[idx] - 1] = vrad
+
+                    if n >= 4:
+                        pol = readint(card[15:16], 1)
+                    else:
+                        pol = -1
+                    spolar[idx][numats[idx] - 1] = pol
+
+            nacids[0] = nacids_val
+
+    except FileNotFoundError:
+        raise RuntimeError('ERROR: unable to open "vdw.radii"')
+
