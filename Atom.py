@@ -20,15 +20,30 @@ import sys
 import time
 import datetime
 import numpy as np
+import Get__Radii
 
-# Dictionary of van der Waals radii (in Ångströms)
-VAN_DER_WAALS_RADII = {
-    'H': 1.2,
-    'C': 1.7,
-    'N': 1.55,
-    'O': 1.52,
-    'S': 1.8
-}
+
+# Get every radii for each atom of each residue
+FILENAME = "./Data/vdw.radii"
+# Checking if the file exists
+IS_EXIST = os.path.exists(FILENAME)
+if IS_EXIST:
+    print(f"'{FILENAME}' found...")
+    time.sleep(2)
+    VAN_DER_WAALS_RADII = Get__Radii.get_radii(FILENAME)
+else:
+    print("This file does not exist. Please check the file path.\
+        \nExit")
+    time.sleep(2)
+    # Dictionary of van der Waals radii (in Ångströms)
+    VAN_DER_WAALS_RADII = {
+        'H': 1.2,
+        'C': 1.7,
+        'N': 1.55,
+        'O': 1.52,
+        'S': 1.8
+    }
+
 
 class Atom:
     """
@@ -41,7 +56,7 @@ class Atom:
         asa (float): Solvent-accessible surface area (in Å²), default is 0.0.
         index (int): Atom index (optional, useful for tracking).
     """
-    def __init__(self, element, position, index=None):
+    def __init__(self, element:str,  position, index=None):
         self.element = element
         self.position = np.array(position)
         self.index = index
@@ -70,6 +85,7 @@ if __name__ == "__main__":
         print("This file does not exist. Please check the file path.\
             \nExit")
         sys.exit()
+
     # In case the file is found
     print(f"File found: {FILE}. Opening now")
     time.sleep(2)

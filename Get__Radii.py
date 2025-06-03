@@ -13,8 +13,7 @@ def get_radii(filename: str):
         residues:Dict
     """
 
-    output = ""
-    residues = {}
+    # residues = {}
     atoms = {}
     with open(filename, 'r') as radii_file :
         for line in radii_file:
