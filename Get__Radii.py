@@ -1,33 +1,38 @@
 """Retrieves atoms radii from file 'vdw.radii'"""
 import time
 
-FILENAME = "./Data/vdw.radii"
-output = ""
-residues = {}
 
-with open(FILENAME, 'r') as radii_file :
-    for line in radii_file:
-        integrate_line = radii_file.readline()
-        
-        if not integrate_line.startswith('#') and not integrate_line.startswith("\n"):
-            # New residu
-            if integrate_line.startswith("RESIDUE"):
-                # print(integrate_line.strip().split()[1:])
-                residue = integrate_line.strip().split()[2]
-                residues[residue] = []
-            elif integrate_line.startswith("ATOM"):
-                residues[residue].append({
-                    'name' : integrate_line.strip().split()[1], 
-                    'radius' : integrate_line.strip().split()[2],
-                    'polar' : integrate_line.strip().split()[3]
-                })
-                
-                # residue['type'],residue['name'],residue['nb_atoms'] = 
-            # print(integrate_line)
-            # output = output+integrate_line
+def get_radii(filename: str):
+    """
+    Returns the radii atoms based on each type of residue.
+    ---
+    Attributes
+        filename:str
+    ---
+    Returns
+        residues:Dict
+    """
 
-print(residues)
+    output = ""
+    residues = {}
+    with open(filename, 'r') as radii_file :
+        for line in radii_file:
+            integrate_line = radii_file.readline()
+            
+            if not integrate_line.startswith('#') and not integrate_line.startswith("\n"):
+                # New residu
+                if integrate_line.startswith("RESIDUE"):
+                    residue = integrate_line.strip().split()[2]
+                    residues[residue] = []
+                elif integrate_line.startswith("ATOM"):
+                    residues[residue].append({
+                        'name' : integrate_line.strip().split()[1], 
+                        'radius' : integrate_line.strip().split()[2],
+                        'polar' : integrate_line.strip().split()[3]
+                    })
+    return residues         
 
-# print("OUTPUT")
-# time.sleep(2)
-# print (output)
+if __name__ == "__main__":
+    FILENAME = "./Data/vdw.radii"
+    residues = get_radii(FILENAME)
+    print(residues)
