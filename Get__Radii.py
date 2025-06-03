@@ -23,16 +23,17 @@ def get_radii(filename: str):
                 # New residu
                 if integrate_line.startswith("RESIDUE"):
                     residue = integrate_line.strip().split()[2]
-                    residues[residue] = []
                 elif integrate_line.startswith("ATOM"):
-                    residues[residue].append({
+                    residues[residue]={
                         'name' : integrate_line.strip().split()[1], 
                         'radius' : integrate_line.strip().split()[2],
                         'polar' : integrate_line.strip().split()[3]
-                    })
+                    }
     return residues         
 
 if __name__ == "__main__":
+    # Get every radii for each atom of each residue 
     FILENAME = "./Data/vdw.radii"
     residues = get_radii(FILENAME)
-    print(residues)
+    # print(residues)
+    print(residues['ALA'])
