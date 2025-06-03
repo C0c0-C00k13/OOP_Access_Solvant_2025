@@ -15,10 +15,11 @@ with open(FILENAME, 'r') as radii_file :
                 # print(integrate_line.strip().split()[1:])
                 residue = integrate_line.strip().split()[2]
                 residues[residue] = []
+            elif integrate_line.startswith("ATOM"):
                 residues[residue].append({
-                    'type' : integrate_line.strip().split()[1], 
-                    'name' : integrate_line.strip().split()[2],
-                    'nb_atoms' : integrate_line.strip().split()[3]
+                    'name' : integrate_line.strip().split()[1], 
+                    'radius' : integrate_line.strip().split()[2],
+                    'polar' : integrate_line.strip().split()[3]
                 })
                 
                 # residue['type'],residue['name'],residue['nb_atoms'] = 
