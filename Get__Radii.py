@@ -3,14 +3,30 @@ import time
 
 FILENAME = "./Data/vdw.radii"
 output = ""
+residues = {}
 
 with open(FILENAME, 'r') as radii_file :
     for line in radii_file:
         integrate_line = radii_file.readline()
+        
         if not integrate_line.startswith('#') and not integrate_line.startswith("\n"):
+            # New residu
+            if integrate_line.startswith("RESIDUE"):
+                # print(integrate_line.strip().split()[1:])
+                residue = integrate_line.strip().split()[2]
+                residues[residue] = []
+                residues[residue].append({
+                    'type' : integrate_line.strip().split()[1], 
+                    'name' : integrate_line.strip().split()[2],
+                    'nb_atoms' : integrate_line.strip().split()[3]
+                })
+                
+                # residue['type'],residue['name'],residue['nb_atoms'] = 
             # print(integrate_line)
-            output = output+integrate_line
+            # output = output+integrate_line
 
-print("OUTPUT")
-time.sleep(2)
-print (output)
+print(residues)
+
+# print("OUTPUT")
+# time.sleep(2)
+# print (output)
