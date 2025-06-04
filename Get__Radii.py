@@ -23,7 +23,6 @@ def get_radii(filename: str):
         residues:Dict
     """
 
-    # residues = {}
     atoms = {}
     with open(filename, 'r') as radii_file :
         for line in radii_file:
@@ -40,17 +39,7 @@ def get_radii(filename: str):
                         # Atom : Radius
                         atoms[atom_i] = integrate_line.strip().split()[2]
     return atoms
-
-    #             if integrate_line.startswith("RESIDUE"):
-    #                 residue = integrate_line.strip().split()[2]
-    #                 residues[residue] = []
-    #             elif integrate_line.startswith("ATOM"):
-    #                 residues[residue].append({
-    #                     'name' : integrate_line.strip().split()[1], 
-    #                     'radius' : integrate_line.strip().split()[2],
-    #                     'polar' : integrate_line.strip().split()[3]
-    #                 })
-    # return residues         
+        
 
 def get_radius(radii_reference, element:str):
     """Returns the radius of an element"""
@@ -71,8 +60,6 @@ if __name__ == "__main__":
         print(f"This file does not exist. Default values:\n{VAN_DER_WAALS_RADII}.")
     time.sleep(2)
 
-    # print(residues)
-    # print(residues.keys())
     for atom in VAN_DER_WAALS_RADII.keys():
         radius = get_radius(VAN_DER_WAALS_RADII, atom)
         print(atom,":",radius)
