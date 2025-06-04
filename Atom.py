@@ -21,6 +21,7 @@ import time
 import datetime
 import numpy as np
 import Get__Radii
+# from point_atome import PointAtom
 
 
 # Dictionary of van der Waals radii (in Ångströms)
@@ -65,34 +66,6 @@ class Atom:
         """Compute Euclidean distance to another Atom."""
         return np.linalg.norm(self.position - other.position)
 
-    def generate_sphere(self,n:int):
-        """
-        Generate a quasi-uniformes n points sphere based on
-        Saff and Kuijlaars algorithm (1997).
-
-        Args:
-            n (int): Number of points to generate the spphere.
-
-        Returns:
-            points (ndarray): An array (n, 3) with coordinates x, y, z of every points.
-        """
-
-        points = np.zeros((n, 3))
-
-        for k in range(1, n + 1):
-            h = -1 + 2 * (k - 1) / (n - 1)  # Hauteur du point
-            theta = np.arccos(h)            # Colatitude
-            phi = np.pi * (1 + np.sqrt(5)) * (k - 1)  # Longitude (angle d'or)
-
-            # Transfert Coordonnées sphériques vers cartésiennes
-            x = np.sin(theta) * np.cos(phi)
-            y = np.sin(theta) * np.sin(phi)
-            z = np.cos(theta)
-
-            points[k - 1] = np.array([x, y, z])
-
-        return points
-
     # def __repr__(self):
     #     return f"Atom({self.index}, {self.element}, ASA={self.asa:.2f})"
 
@@ -131,5 +104,7 @@ if __name__ == "__main__":
                 element = line.strip().split()[-1]
                 # print(f"Index:{index}; Position:{position}; Element:{element}")
                 atom = Atom(element=element,position=position,index=index)
-                print(atom.__dict__)
+                # print(atom.__dict__)
+                print(atom)
+
     print("Done")
