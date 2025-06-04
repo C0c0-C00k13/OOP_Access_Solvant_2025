@@ -27,19 +27,19 @@ def get_radii(filename: str):
     with open(filename, 'r') as radii_file :
         for line in radii_file:
             integrate_line = radii_file.readline()
-            
+
             if not integrate_line.startswith('#') and not integrate_line.startswith("\n"):
                 # New residu
-    
+
                 if integrate_line.startswith("ATOM"):
                     atom_i = integrate_line.strip().split()[1]
                     if atom_i == "SD" or atom_i == "SG":
                         atom_i = "S"
-                    if not atom_i in atoms:
+                    if atom_i not in atoms:
                         # Atom : Radius
                         atoms[atom_i] = integrate_line.strip().split()[2]
     return atoms
-        
+
 
 def get_radius(radii_reference, element:str):
     """Returns the radius of an element"""
@@ -49,7 +49,7 @@ def get_radius(radii_reference, element:str):
 if __name__ == "__main__":
     # Dictionary of van der Waals radii (in Ångströms)
     FILENAME = "./Data/vdw.radii"
-    
+
     # Checking if the file exists
     IS_EXIST = os.path.exists(FILENAME)
     if IS_EXIST:
@@ -60,6 +60,6 @@ if __name__ == "__main__":
         print(f"This file does not exist. Default values:\n{VAN_DER_WAALS_RADII}.")
     time.sleep(2)
 
-    for atom in VAN_DER_WAALS_RADII.keys():
+    for atom in VAN_DER_WAALS_RADII:
         radius = get_radius(VAN_DER_WAALS_RADII, atom)
         print(atom,":",radius)
