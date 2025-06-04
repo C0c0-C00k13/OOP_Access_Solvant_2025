@@ -21,7 +21,6 @@ import time
 import datetime
 import numpy as np
 import Get__Radii
-# from point_atome import PointAtom
 
 
 # Dictionary of van der Waals radii (in Ångströms)
@@ -60,6 +59,7 @@ class Atom:
         self.position = np.array(position)
         self.index = index
         self.radius = VAN_DER_WAALS_RADII.get(element, 1.5)  # default if unknown
+        self.points = None # will be filled after Sphere generation
         self.asa = 0.0  # will be filled after ASA calculation
 
     def distance_to(self, other):
@@ -99,7 +99,7 @@ if __name__ == "__main__":
                 coord_z = float(line.strip().split()[-6])
                 coord_y = float(line.strip().split()[-5])
                 coord_x = float(line.strip().split()[-4])
-                position = (coord_x,coord_y,coord_y)
+                position = (coord_x,coord_y,coord_z)
                 # Element
                 element = line.strip().split()[-1]
                 # print(f"Index:{index}; Position:{position}; Element:{element}")
