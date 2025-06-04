@@ -1,5 +1,15 @@
 """Retrieves atoms radii from file 'vdw.radii'"""
 import time
+import os
+
+# Defaults Radii
+VAN_DER_WAALS_RADII = {
+    'H': 1.2,
+    'C': 1.7,
+    'N': 1.55,
+    'O': 1.52,
+    'S': 1.8
+}
 
 
 def get_radii(filename: str):
@@ -24,11 +34,11 @@ def get_radii(filename: str):
     
                 if integrate_line.startswith("ATOM"):
                     atom_i = integrate_line.strip().split()[1]
-                    atoms[atom_i] = []
-                    atoms[atom_i].append({
-                        'radius' : integrate_line.strip().split()[2],
-                        'polar' : integrate_line.strip().split()[3]
-                    })
+                    if atom_i == "SD" or atom_i == "SG":
+                        atom_i = "S"
+                    if not atom_i in atoms:
+                        # Atom : Radius
+                        atoms[atom_i] = integrate_line.strip().split()[2]
     return atoms
 
     #             if integrate_line.startswith("RESIDUE"):
@@ -42,10 +52,27 @@ def get_radii(filename: str):
     #                 })
     # return residues         
 
+def get_radius(radii_reference, element:str):
+    """Returns the radius of an element"""
+    return radii_reference[element]
+
+
 if __name__ == "__main__":
-    # Get every radii for each atom of each residue 
+    # Dictionary of van der Waals radii (in Ångströms)
     FILENAME = "./Data/vdw.radii"
-    residues = get_radii(FILENAME)
+    
+    # Checking if the file exists
+    IS_EXIST = os.path.exists(FILENAME)
+    if IS_EXIST:
+        print(f"Radii references: '{FILENAME}' found...")
+        time.sleep(2)
+        VAN_DER_WAALS_RADII = get_radii(FILENAME)
+    else:
+        print(f"This file does not exist. Default values:\n{VAN_DER_WAALS_RADII}.")
+    time.sleep(2)
+
     # print(residues)
     # print(residues.keys())
-    print(residues['N'][0]['radius'])
+    for atom in VAN_DER_WAALS_RADII.keys():
+        radius = get_radius(VAN_DER_WAALS_RADII, atom)
+        print(atom,":",radius)
