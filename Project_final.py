@@ -1,11 +1,12 @@
 """Script d'exécution du calcul de surface de la protéine exposée au solvant
 """
 import numpy as np
-import Bio
-from Bio.PDB import PDBParser
+# import Bio
+# from Bio.PDB import PDBParser
 # from Bio.PDB import Structure
 import Atom
-from Bio.PDB import NACCESS
+import Get__Radii
+# from Bio.PDB import NACCESS
 import datetime
 
 
@@ -50,60 +51,6 @@ def PDBRetrieve_Atoms(id_prot, filename):
     # print(f"Nombre total d'atome : {len(list_atome)};\nListe d'atome : {list_atome}")
     return list_atome
 
-class point_atome:
-    """
-    """
-
-
-    def __init__(self, atom_center, x_pt, y_pt, z_pt):
-        self.atom_center = atom_center 
-        self.x_pt = x_pt
-        self.y_pt = y_pt
-        self.z_pt = z_pt
-
-    def __str__(self):
-        return f"Atome {print(self.atom_center)},\t Point coords[{self.x_pt},{self.y_pt},{self.z_pt}]"
-
-    def calcul_distance(self, atome):
-        help = "Methodes pemettant de calculer la distance entre 2 atomes"
-        if isinstance(atome,Bio.PDB.Atom.Atom):
-            distX = abs(self.x_pt - atome.coord[0])
-            distY = abs(self.y_pt - atome.coord[1])
-            distZ = abs(self.z_pt - atome.coord[2])
-            return pow( (pow((distX), 2) + pow((distY),2) + pow((distZ),2)), 0.5)
-
-# ------------------------
-def saff_kuijlaars_points(N):
-    """
-    Génère N points quasi-uniformes sur une sphère unitaire
-    à l'aide de l'algorithme de Saff et Kuijlaars.
-
-    Args:
-        N (int): Nombre de points à générer.
-
-    Returns:
-        points (ndarray): Un tableau (N, 3) avec les coordonnées x, y, z des points.
-    """
-    
-    points = np.zeros((N, 3))
-    
-    for k in range(1, N + 1):
-        h = -1 + 2 * (k - 1) / (N - 1)  # Hauteur du point
-        theta = np.arccos(h)            # Colatitude
-        phi = np.pi * (1 + np.sqrt(5)) * (k - 1)  # Longitude (angle d'or)
-        
-        # Coordonnées sphériques vers cartésiennes
-        x = np.sin(theta) * np.cos(phi)
-        y = np.sin(theta) * np.sin(phi)
-        z = np.cos(theta)
-        
-        points[k - 1] = np.array([x, y, z])
-    
-    return points
-# ------------------------
-# p1 = point_atome(totale_atoms[0], 1.0,2.0,3.5)
-# p1.calcul_distance(totale_atoms[4])
-# totale_atoms[0] - totale_atoms[1]
 
 def minifuction(atome,points):
     """Génère une liste de points représantant un atome de la proteine
@@ -193,41 +140,43 @@ def Exposition_point_par_solvant(list_atome):
 if __name__ == "__main__":
 
     # Affichage de la date : nom du dossier
-    # datetime.datetime.now().strftime("%d-%m-%Y")
+    # execution_time = datetime.datetime.now().strftime("%x - %X") # 06/04/25 - 12:21:31
+    execution_time = datetime.datetime.now().strftime("%c") # Wed Jun  4 12:23:08 202
+    # datetime.datetime.now().strftime("%m-%d-%Y") # 06-04-2025
     
     protein1 = ("","./Data/insuline.pdb")
-    print("Début de lecture du fichier PDB.")
-    list_atome = PDBRetrieve_Atoms(protein1[0],protein1[1])
+    print(f"{execution_time} \nDébut de lecture du fichier PDB.")
+    # list_atome = PDBRetrieve_Atoms(protein1[0],protein1[1])
     
-    print("Fin de lecture du fichier PDB.")
-    print("Début du calcul d'exposition dela protéine au solvant")
-    Exposition_point_par_solvant(list_atome=list_atome)
+    # print("Fin de lecture du fichier PDB.")
+    # print("Début du calcul d'exposition dela protéine au solvant")
+    # Exposition_point_par_solvant(list_atome=list_atome)
     
-    # Liste de tous les atomes de protéines. Non séparés par résidu
-    TOTALE_ATOMS = []
-    for res in list_atome:
-        TOTALE_ATOMS = TOTALE_ATOMS + res
-    TOTAL_POINTS = 92 * len(TOTALE_ATOMS)
+    # # Liste de tous les atomes de protéines. Non séparés par résidu
+    # TOTALE_ATOMS = []
+    # for res in list_atome:
+    #     TOTALE_ATOMS = TOTALE_ATOMS + res
+    # TOTAL_POINTS = 92 * len(TOTALE_ATOMS)
     
-    # Pourcentage de la protéine esposée au solvant
-    solvated_region = 0
-    for atome in TOTALE_ATOMS:
-        solvated_region += len(atome.liste_points_solvant)
+    # # Pourcentage de la protéine esposée au solvant
+    # solvated_region = 0
+    # for atome in TOTALE_ATOMS:
+    #     solvated_region += len(atome.liste_points_solvant)
     
-    # Pourcentage de la protéine esposée au solvant par résidu
-    solvated_region_2 = []
-    for res in list_atome:
-        solvated_region_per_res = 0
-        total_point_per_res = 92 * len(res)
-        for atome in res:
-            solvated_region_per_res += len(atome.liste_points_solvant)
-        # Pourcentage duu résidu exposé au solvant
-        tmp = solvated_region_per_res/ total_point_per_res * 100
-        solvated_region_2.append(tmp)
+    # # Pourcentage de la protéine esposée au solvant par résidu
+    # solvated_region_2 = []
+    # for res in list_atome:
+    #     solvated_region_per_res = 0
+    #     total_point_per_res = 92 * len(res)
+    #     for atome in res:
+    #         solvated_region_per_res += len(atome.liste_points_solvant)
+    #     # Pourcentage duu résidu exposé au solvant
+    #     tmp = solvated_region_per_res/ total_point_per_res * 100
+    #     solvated_region_2.append(tmp)
             
              
-    print(f"Proportion de protéine au solvant exposée :{solvated_region/(TOTAL_POINTS)*100}%.")
-    print(f"Proportion exposées par résidu:")
-    for idx, region in enumerate(solvated_region_2):
-        print(f"Proportion exposée du résidu {idx} : {region}%")
+    # print(f"Proportion de protéine au solvant exposée :{solvated_region/(TOTAL_POINTS)*100}%.")
+    # print(f"Proportion exposées par résidu:")
+    # for idx, region in enumerate(solvated_region_2):
+    #     print(f"Proportion exposée du résidu {idx} : {region}%")
     print("Fin d'éxecution.")
