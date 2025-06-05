@@ -224,28 +224,35 @@ sphere_points = generate_sphere_points(n_surface_points)
 
 
 
-def calculate_asa(atoms):
-    asa_per_atom = []
-    for i, (x, y, z, element) in enumerate(atoms):
-        r = vdw_radii.get(element, 1.5) + probe_radius
-        accessible_points = 0
-        for dx, dy, dz in sphere_points:
-            px, py, pz = x + r*dx, y + r*dy, z + r*dz
-            exposed = True
-            for j, (x2, y2, z2, element2) in enumerate(atoms):
-                if i == j:
-                    continue
-                r2 = vdw_radii.get(element2, 1.5) + probe_radius
-                if distance((px, py, pz), (x2, y2, z2)) < r2:
+def calculate_asa(current_atom, atoms_list, probe_radius=1.4)->float:
+    """Calculates ASA of 1 atom."""
+
+    # Radius of current atom
+    threshold_radius = current_atom.radius + probe_radius
+    accessible_points = 0
+
+    # Runs through the list of points of current atom
+    for point in current_atom.points:
+        # print(point)
+        exposed = True
+        # Runs through the list of atoms
+        for atom_i in atoms_list:
+            if current_atom.index != atom_i.index:
+                # print(f"Processing atom: {atom_i}")
+                if distance(point, atom_i.position) < threshold_radius:
                     exposed = False
                     break
-            if exposed:
-                accessible_points += 1
-        # Surface area of full sphere * exposed fraction
-        sphere_area = 4 * math.pi * r**2
-        asa = sphere_area * (accessible_points / n_surface_points)
-        asa_per_atom.append((i, element, round(asa, 2)))
-    return asa_per_atom
+                if exposed:
+                    # print(point, atom_i)
+                    accessible_points += 1
+    print(accessible_points, len(current_atom.points))
+    # Surface area of full sphere * exposed fraction
+    sphere_area = 4 * math.pi * threshold_radius**2
+    # print(sphere_area)
+    # print(sphere_area * (accessible_points / len(current_atom.points)))
+    # asa = sphere_area * (accessible_points / len(current_atom.points))
+    # return asa
+    return sphere_area * (accessible_points / len(current_atom.points))
 
 # --- EXECUTION
 # Run ASA calculation
@@ -349,50 +356,22 @@ if __name__ == "__main__":
     # time.sleep(2)
     # -------------------------------------------
     # CALCULATE ASA
-    # for atom_i in atoms:
-    #     if atom_i == atom:
-    #         print("Same atom selected. Skip...")
-    #         time.sleep(2)
-    #     else:
-    #         distance_i = distance(atom.position,atom_i.position)
-    #         print(f"Distance between atom n°{atom.index} and n°{atom_i.index}:\
-    #               {distance_i} Angstrom.")
-
-
-
-    # Unique test
-    # distance_i = distance(atom.position,atom_1.position)
-    # print(f"Distance between atom n°{atom.index} and n°{atom_1.index}:\
-    #       {distance_i} Angstrom.")
-
-
+    distance_i = distance(atom.position,atom_1.position)
+    print(f"Distance between atom n°{atom.index} and n°{atom_1.index}:\
+{distance_i} Angstrom.")
 
     # -- UNIQUE TEST
-    # Calculate ASA
-    asa_per_atom = []
-    # Radius of current atoms
-    threshold_radius = atom.radius + probe_radius
-    accessible_points = 0
-    # Runs through the list of points of current atom
-    for point in atom.points:
-        # print(point)
-        exposed = True
-        # Runs through the list of atoms
-        for atom_i in atoms:
-            if atom.index != atom_i.index:
-                # print(f"Processing atom: {atom_i}")
-                if distance(point, atom_i.position) < threshold_radius:
-                    exposed = False
-                    break
-                if exposed:
-                    print(point, atom_i)
-                    accessible_points += 1
-    print(accessible_points)
-    # Surface area of full sphere * exposed fraction
-    sphere_area = 4 * math.pi * threshold_radius**2
-    atom.asa = sphere_area * (accessible_points / len(atom.points))
-    asa_per_atom.append({'nb_atom' : atom.index, 'element': atom.element, 'asa': round(atom.asa, 2)})
-    print(asa_per_atom)
+    atom.asa = calculate_asa(current_atom=atom, atoms_list=atoms)
+    print(atom)
+
+    # GENERAL TEST
+    for atom_i in atoms:
+        print(atom_i)
+        atom_i.points = saff_kuijlaars_points(NUMBER_OF_POINTS, atom_i.position, atom_i.radius)
+        atom_i.asa = calculate_asa(current_atom=atom_i, atoms_list=atoms)
+        print(atom_i)
+
+
 
 
     # print("Début du calcul d'exposition dela protéine au solvant")
