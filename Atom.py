@@ -59,7 +59,8 @@ class Atom:
         self.position = np.array(position)
         self.index = index
         self.radius = Get__Radii.get_radius(VAN_DER_WAALS_RADII, element)  # default if unknown
-        self.points = None # will be filled after Sphere generation
+        self.points = None # Will be filled after Sphere generation
+        self.exposed_points = None # Will be filled by distance calculation
         self.asa = 0.0  # will be filled after ASA calculation
 
     # def __repr__(self):

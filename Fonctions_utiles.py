@@ -4,9 +4,21 @@ import os
 import sys
 import time
 import datetime
+import math
 import numpy as np
 from Atom import Atom
 from point_atome import PointAtom
+from Get__Radii import get_radii
+
+
+# Defaults Radii
+VAN_DER_WAALS_RADII = {
+    'H': 1.2,
+    'C': 1.7,
+    'N': 1.55,
+    'O': 1.52,
+    'S': 1.8
+}
 
 def get_atoms(file:str):
     """Returns list of atoms from a PDB file.
@@ -22,26 +34,45 @@ def get_atoms(file:str):
 
     atoms = []
     with open(file, "r") as pdb_file:
-        line = pdb_file.readline()
-        if line.startswith("ATOM"):
-            # Index
-            index = int(line.strip().split()[1])
-            # Coordinates
-            coord_z = float(line.strip().split()[-6])
-            coord_y = float(line.strip().split()[-5])
-            coord_x = float(line.strip().split()[-4])
-            position = (coord_x,coord_y,coord_z)
-            # Element
-            element = line.strip().split()[-1]
-            # print(f"Index:{index}; Position:{position}; Element:{element}")
-            atom = Atom(element=element,position=position,index=index)
-            # print(atom.__dict__)
-            atoms.append(atom)
+        for line in pdb_file:
+            if line.startswith("ATOM"):
+                # Index
+                index = int(line.strip().split()[1])
+                # Coordinates
+                coord_z = float(line.strip().split()[-6])
+                coord_y = float(line.strip().split()[-5])
+                coord_x = float(line.strip().split()[-4])
+                position = (coord_x,coord_y,coord_z)
+                # Element
+                element = line.strip().split()[-1]
+                atom = Atom(element=element,position=position,index=index)
+                atoms.append(atom)
 
-    return set(atoms)
+    return tuple(atoms)
+
+def get_1st_atom(file:str):
+    """Returns the 1st atom of the PDB file."""
+    with open(file, "r") as pdb_file:
+        line = pdb_file.readline()
+        while not line.startswith("ATOM"):
+            line = pdb_file.readline()
+        # print(line.strip())
+        # Index
+        index = int(line.strip().split()[1])
+        # Coordinates
+        coord_z = float(line.strip().split()[-6])
+        coord_y = float(line.strip().split()[-5])
+        coord_x = float(line.strip().split()[-4])
+        position = (coord_x,coord_y,coord_z)
+        # Element
+        element = line.strip().split()[-1]
+        # print(f"Index:{index}; Position:{position}; Element:{element}")
+        atom = Atom(element=element,position=position,index=index)
+        # print(atom.__dict__)
+        return atom
 
 # ------------------------
-def saff_kuijlaars_points(n, coords=(0,0,0), radius=0):
+def saff_kuijlaars_points(n, center=(0.0,0.0,0.0), radius=0.0):
     """
     Génère N points quasi-uniformes sur une sphère unitaire
     à l'aide de l'algorithme de Saff et Kuijlaars.
@@ -58,17 +89,17 @@ def saff_kuijlaars_points(n, coords=(0,0,0), radius=0):
     points = np.zeros((n, 3))
 
     for k in range(1, n + 1):
-        if radius != 0:
-            h = radius
+        h = -1 + 2 * (k - 1) / (n - 1)  # Hauteur du point
+        theta = math.acos(h)            # Colatitude
+        if k == 1 or k == n:
+            phi = 0.0
         else:
-            h = -1 + 2 * (k - 1) / (n - 1)  # Hauteur du point
-        theta = np.arccos(h)            # Colatitude
-        phi = np.pi * (1 + np.sqrt(5)) * (k - 1)  # Longitude (angle d'or)
+            phi += 3.6 / math.sqrt(n * (1 - h * h))
 
         # Coordonnées sphériques vers cartésiennes
-        x = coords[0] + np.sin(theta) * np.cos(phi)
-        y = coords[1] + np.sin(theta) * np.sin(phi)
-        z = coords[2] + np.cos(theta)
+        x = center[0] + math.sin(theta) * math.cos(phi) * radius
+        y = center[1] + math.sin(theta) * math.sin(phi) * radius
+        z = center[2] + math.cos(theta) * radius
 
         points[k - 1] = np.array([x, y, z])
 
@@ -162,6 +193,10 @@ def minifuction(atome,points):
     return liste_point_coord
     # print(len(liste_point_coord), liste_point_coord)
 
+def distance(a, b):
+    """Calculates distance between 2 points"""
+    return math.sqrt(sum((a[i]-b[i])**2 for i in range(3)))
+
 def comparaisonDistances(atome:Atom, pts_atome, totale_atoms):
     """Fonction renvoyant la liste des points exposés au solvant en fonction de leurs distances au reste des atomes
     Parameters
@@ -229,7 +264,7 @@ def Exposition_point_par_solvant(list_atome):
 
 # ---------------------------------------------------------------------------------
 # ------------------------------------
-import math
+# import math
 
 # Example input: list of atoms (x, y, z, element)
 atoms = [
@@ -259,9 +294,7 @@ def generate_sphere_points(n):
 
 sphere_points = generate_sphere_points(n_surface_points)
 
-def distance(a, b):
-    """Calculates distance between 2 points"""
-    return math.sqrt(sum((a[i]-b[i])**2 for i in range(3)))
+
 
 def calculate_asa(atoms):
     asa_per_atom = []
@@ -380,27 +413,31 @@ if __name__ == "__main__":
             \nExit")
         sys.exit()
 
-    with open(FILE, "r") as pdb_file:
-        line = pdb_file.readline()
-        while not line.startswith("ATOM"):
-            line = pdb_file.readline()
-        # print(line.strip())
-        # Index
-        index = int(line.strip().split()[1])
-        # Coordinates
-        coord_z = float(line.strip().split()[-6])
-        coord_y = float(line.strip().split()[-5])
-        coord_x = float(line.strip().split()[-4])
-        position = (coord_x,coord_y,coord_z)
-        # Element
-        element = line.strip().split()[-1]
-        # print(f"Index:{index}; Position:{position}; Element:{element}")
-        atom = Atom(element=element,position=position,index=index)
-        # print(atom.__dict__)
+    # List radii
+    FILENAME = "./Data/vdw.radii"
 
-        print("Generating Sphere points...")
-        time.sleep(2)
-        atom.points = saff_kuijlaars_points(92,atom.position,atom.radius)
-        print(atom.points)
+    # IS_EXIST = os.path.exists(FILENAME)
+    # if IS_EXIST:
+    #     # print('MAIN EXECUTION')
+    #     # print(f"Radii references: '{FILENAME}' found...")
+    #     time.sleep(1)
+    #     VAN_DER_WAALS_RADII = get_radii(FILENAME)
+    # else:
+    #     print(f"This file does not exist. Default values:\n{VAN_DER_WAALS_RADII}.")
+    # time.sleep(2)
+
+    atom_1 = get_1st_atom(FILE)
+    # print(atom_1)
+
+    atoms = get_atoms(FILE)
+    atom = atoms[1]
+    # print(atom)
+
+
+    print("Generating Sphere points...")
+    # time.sleep(2)
+    # print(type(atom), atom.radius, type(atom.radius))
+    atom.points = saff_kuijlaars_points(92,atom.position,atom.radius)
+    print(atom.points)
 
     print("Fin d'éxecution.")
