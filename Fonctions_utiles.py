@@ -383,14 +383,15 @@ if __name__ == "__main__":
                 # print(f"Processing atom: {atom_i}")
                 if distance(point, atom_i.position) < threshold_radius:
                     exposed = False
-                    # break
-        if exposed:
-            accessible_points += 1
+                    break
+                if exposed:
+                    print(point, atom_i)
+                    accessible_points += 1
     print(accessible_points)
     # Surface area of full sphere * exposed fraction
     sphere_area = 4 * math.pi * threshold_radius**2
     atom.asa = sphere_area * (accessible_points / len(atom.points))
-    asa_per_atom.append((atom.index, atom.element, round(atom.asa, 2)))
+    asa_per_atom.append({'nb_atom' : atom.index, 'element': atom.element, 'asa': round(atom.asa, 2)})
     print(asa_per_atom)
 
 
