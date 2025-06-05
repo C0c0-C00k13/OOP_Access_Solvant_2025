@@ -119,42 +119,44 @@ def display_sphere(atom:Atom):
     ax.set_box_aspect([1, 1, 1])
     plt.show()
 
-def distance(a, b):
+def distance(point_a, point_b)->float:
     """Calculates distance between 2 points"""
-    return math.sqrt(sum((a[i]-b[i])**2 for i in range(3)))
+    return math.sqrt(sum((point_a[i]-point_b[i])**2 for i in range(3)))
 
-def comparaisonDistances(atome:Atom, pts_atome, totale_atoms):
-    """Fonction renvoyant la liste des points exposés au solvant en fonction de leurs distances au reste des atomes
+def comparaisonDistances(atom:Atom, list_points, totale_atoms):
+    """Returns a list of points exposed to solvant based on
+    distances au reste des atomes.
+
     Parameters
     ------
-    atome : Bio.PDB.Atom
+    atom : Atom
         Atome auquel les points sont reliés
     pts_atom : list
-        Liste des points reliés à l'objet atome
+        Liste des points reliés à l'objet atom
     totale_atoms : list
         Ensemble des atomes contenus dans la protéine
     Returns
     ------
     list
-        Liste des points exposés au solvant rattachés à atome. 
+        Liste des points exposés au solvant rattachés à atom. 
     """
 
     # Le seuil fixe correspond à la taille d'un atome d'oxygène
     liste_points_solvant = [] 
     SEUIL = 1.4
     # Comparer les distances
-    for pt in pts_atome:
+    for pt in list_points:
         # Au debut de la comparaison, un veariable vaut 0.
         condition_solvate = True
         for at_tot in totale_atoms:
             # Calcul des points pour chaque atome + renvoei d'une liste de points
-            if at_tot == atome:
-            # print(f"atome trouve en position {cpt_tot_at}")
+            if at_tot == atom:
+            # print(f"atom trouve en position {cpt_tot_at}")
                 pass
             else:
-                # print(f"Residu/atome {cpt_at_per_res+1, atome.element};\
-                # Distance {pt.calcul_distance(atome=at_tot)}")
-                if pt.calcul_distance(atome=at_tot) < SEUIL:
+                # print(f"Residu/atom {cpt_at_per_res+1, atom.element};\
+                # Distance {pt.calcul_distance(atom=at_tot)}")
+                if pt.calcul_distance(atom=at_tot) < SEUIL:
                     condition_solvate = False
         if condition_solvate:
             liste_points_solvant.append(pt)
@@ -180,8 +182,8 @@ def Exposition_point_par_solvant(list_atome):
     for res in list_atome:
         for atome in res:
             atome.liste_points_solvant = []
-            # pts_atome = minifuction(atome=atome, points=points)
-            # atome.liste_points_solvant = comparaisonDistances(atome, pts_atome, TOTALE_ATOMS)
+            # list_points = minifuction(atome=atome, points=points)
+            # atome.liste_points_solvant = comparaisonDistances(atome, list_points, TOTALE_ATOMS)
     # for res in list_atome:
     #     print(res)
     #     for atome in res:
@@ -333,6 +335,14 @@ if __name__ == "__main__":
     # print(type(atom), atom.radius, type(atom.radius))
     atom.points = saff_kuijlaars_points(NUMBER_OF_POINTS,atom.position,atom.radius)
     # print(atom.points)
+
+    for atom_i in atoms:
+        if atom_i == atom:
+            print("Same atom selected. Skip...")
+            time.sleep(2)
+        else:
+            distance_i = distance(atom.position,atom_i.position)
+            print(f"Distance between atom n°{atom.index} and n°{atom_i.index}: {distance_i}")
 
 
     # print("Début du calcul d'exposition dela protéine au solvant")
