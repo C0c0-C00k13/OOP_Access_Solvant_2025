@@ -297,6 +297,9 @@ if __name__ == "__main__":
 
     # Display the current date of run
     today = datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+
+    # -------------------------------------------
+    # CHECK PDB FILE
     FILE_PDB = "Data/2c8r.pdb"
     # Checking if the file exists
     IS_EXIST = os.path.exists(FILE_PDB)
@@ -306,7 +309,8 @@ if __name__ == "__main__":
             \nExit")
         sys.exit()
 
-    # List radii
+    # -------------------------------------------
+    # CREATE RADII REFERENCE
     FILE_RADIUS = "./Data/vdw.radii"
 
     IS_EXIST = os.path.exists(FILE_RADIUS)
@@ -317,32 +321,77 @@ if __name__ == "__main__":
         VAN_DER_WAALS_RADII = get_radii(FILE_RADIUS)
     else:
         print(f"This file does not exist. Default values:\n{VAN_DER_WAALS_RADII}.")
-    time.sleep(2)
-
+    
+    # time.sleep(2)
+    # -------------------------------------------
+    # READ PDB FILE
     atom_1 = get_1st_atom(FILE_PDB)
     # print(atom_1)
 
-    # print("Début de lecture du fichier PDB.")
+    print("Reading PDB file...")
     atoms = get_atoms(FILE_PDB)
-    # print("Fin de lecture du fichier PDB.")
+    # print(atoms)
+    print("Reading PDB file - Done.")
     atom = atoms[1]
     # print(atom)
 
-
+    # time.sleep(2)
+    # -------------------------------------------
+    # GENEREATE SPHERE
     print("Generating Sphere points...")
     NUMBER_OF_POINTS = 92
     # time.sleep(2)
     # print(type(atom), atom.radius, type(atom.radius))
-    atom.points = saff_kuijlaars_points(NUMBER_OF_POINTS,atom.position,atom.radius)
+    atom.points = saff_kuijlaars_points(NUMBER_OF_POINTS, atom.position, atom.radius)
+    print("Generating Sphere points - DONE")
     # print(atom.points)
 
-    for atom_i in atoms:
-        if atom_i == atom:
-            print("Same atom selected. Skip...")
-            time.sleep(2)
-        else:
-            distance_i = distance(atom.position,atom_i.position)
-            print(f"Distance between atom n°{atom.index} and n°{atom_i.index}: {distance_i}")
+    # time.sleep(2)
+    # -------------------------------------------
+    # CALCULATE ASA
+    # for atom_i in atoms:
+    #     if atom_i == atom:
+    #         print("Same atom selected. Skip...")
+    #         time.sleep(2)
+    #     else:
+    #         distance_i = distance(atom.position,atom_i.position)
+    #         print(f"Distance between atom n°{atom.index} and n°{atom_i.index}:\
+    #               {distance_i} Angstrom.")
+
+
+
+    # Unique test
+    # distance_i = distance(atom.position,atom_1.position)
+    # print(f"Distance between atom n°{atom.index} and n°{atom_1.index}:\
+    #       {distance_i} Angstrom.")
+
+
+
+    # -- UNIQUE TEST
+    # Calculate ASA
+    asa_per_atom = []
+    # Radius of current atoms
+    threshold_radius = atom.radius + probe_radius
+    accessible_points = 0
+    # Runs through the list of points of current atom
+    for point in atom.points:
+        # print(point)
+        exposed = True
+        # Runs through the list of atoms
+        for atom_i in atoms:
+            if atom.index != atom_i.index:
+                # print(f"Processing atom: {atom_i}")
+                if distance(point, atom_i.position) < threshold_radius:
+                    exposed = False
+                    # break
+        if exposed:
+            accessible_points += 1
+    print(accessible_points)
+    # Surface area of full sphere * exposed fraction
+    sphere_area = 4 * math.pi * threshold_radius**2
+    atom.asa = sphere_area * (accessible_points / len(atom.points))
+    asa_per_atom.append((atom.index, atom.element, round(atom.asa, 2)))
+    print(asa_per_atom)
 
 
     # print("Début du calcul d'exposition dela protéine au solvant")
