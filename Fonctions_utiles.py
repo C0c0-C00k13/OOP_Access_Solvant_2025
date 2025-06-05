@@ -2,7 +2,7 @@
 """
 import os
 import sys
-# import time
+import time
 import datetime
 import numpy as np
 from Atom import Atom
@@ -41,7 +41,7 @@ def get_atoms(file:str):
     return set(atoms)
 
 # ------------------------
-def saff_kuijlaars_points(n):
+def saff_kuijlaars_points(n, coords=(0,0,0), radius=0):
     """
     Génère N points quasi-uniformes sur une sphère unitaire
     à l'aide de l'algorithme de Saff et Kuijlaars.
@@ -58,18 +58,79 @@ def saff_kuijlaars_points(n):
     points = np.zeros((n, 3))
 
     for k in range(1, n + 1):
-        h = -1 + 2 * (k - 1) / (n - 1)  # Hauteur du point
+        if radius != 0:
+            h = radius
+        else:
+            h = -1 + 2 * (k - 1) / (n - 1)  # Hauteur du point
         theta = np.arccos(h)            # Colatitude
         phi = np.pi * (1 + np.sqrt(5)) * (k - 1)  # Longitude (angle d'or)
 
         # Coordonnées sphériques vers cartésiennes
-        x = np.sin(theta) * np.cos(phi)
-        y = np.sin(theta) * np.sin(phi)
-        z = np.cos(theta)
+        x = coords[0] + np.sin(theta) * np.cos(phi)
+        y = coords[1] + np.sin(theta) * np.sin(phi)
+        z = coords[2] + np.cos(theta)
 
         points[k - 1] = np.array([x, y, z])
 
     return points
+
+# -------------- TO SUPPRESS
+#     import numpy as np
+# import matplotlib.pyplot as plt
+# from mpl_toolkits.mplot3d import Axes3D
+
+# def generate_sphere_points(n_points, center, radius):
+#     """
+#     Generates quasi-uniform points on the surface of a sphere using
+#     a Fibonacci lattice approach (inspired by Kuijlaars methods).
+
+#     Args:
+#         n_points (int): Number of points to generate on the sphere.
+#         center (tuple): (x, y, z) coordinates of the sphere center.
+#         radius (float): Radius of the sphere.
+
+#     Returns:
+#         np.ndarray: Array of shape (n_points, 3) with 3D coordinates.
+#     """
+#     offset = 2.0 / n_points
+#     increment = np.pi * (3.0 - np.sqrt(5.0))  # Golden angle in radians
+
+#     points = []
+
+#     for i in range(n_points):
+#         y = ((i * offset) - 1) + (offset / 2)
+#         r = np.sqrt(1 - y * y)
+
+#         phi = i * increment
+
+#         x = np.cos(phi) * r
+#         z = np.sin(phi) * r
+
+#         # Scale and translate to desired center and radius
+#         x = center[0] + radius * x
+#         y = center[1] + radius * y
+#         z = center[2] + radius * z
+
+#         points.append((x, y, z))
+
+#     return np.array(points)
+
+# # Example usage
+# if __name__ == "__main__":
+#     n = 1000  # Number of points
+#     center = (1.0, 2.0, 3.0)  # Sphere center
+#     radius = 5.0  # Sphere radius
+
+#     points = generate_sphere_points(n, center, radius)
+
+#     # Plotting
+#     fig = plt.figure(figsize=(8, 8))
+#     ax = fig.add_subplot(111, projection='3d')
+#     ax.scatter(points[:, 0], points[:, 1], points[:, 2], s=3, alpha=0.6)
+#     ax.set_title(f"Sphere of {n} Points (center={center}, radius={radius})")
+#     ax.set_box_aspect([1, 1, 1])
+#     plt.show()
+
 # ------------------------
 # p1 = PointAtom(totale_atoms[0], 1.0,2.0,3.5)
 # p1.calcul_distance(totale_atoms[4])
@@ -225,12 +286,13 @@ def calculate_asa(atoms):
         asa_per_atom.append((i, element, round(asa, 2)))
     return asa_per_atom
 
+# --- EXECUTION
 # Run ASA calculation
-asa_results = calculate_asa(atoms)
+# asa_results = calculate_asa(atoms)
 
 # Output results
-for i, elem, asa in asa_results:
-    print(f"Atom {i} ({elem}): ASA = {asa} Å²")
+# for i, elem, asa in asa_results:
+#     print(f"Atom {i} ({elem}): ASA = {asa} Å²")
 
 
 # Max ASA values (Tien et al. 2013)
@@ -261,17 +323,18 @@ for res_id, aa, asa in asa_data:
     else:
         rsa_data.append((res_id, aa, asa, None))
 
+# --- EXECUTION
 # Print results
-for res_id, aa, asa, rsa in rsa_data:
-    print(f"Residue {res_id} ({aa}): ASA = {asa:.2f}, RSA = {rsa if rsa is not None else 'N/A'}")
+# for res_id, aa, asa, rsa in rsa_data:
+#     print(f"Residue {res_id} ({aa}): ASA = {asa:.2f}, RSA = {rsa if rsa is not None else 'N/A'}")
 
 # ------------------------------------
 # ---------------------------------------------------------------------------------
 
 if __name__ == "__main__":
 
-    protein1 = ("2C8Q","./Data/insuline.pdb")
-    print("Début de lecture du fichier PDB.")
+    # protein1 = ("2C8Q","./Data/insuline.pdb")
+    # print("Début de lecture du fichier PDB.")
     # list_atome = PDBRetrieve_Atoms(protein1[0],protein1[1])
 
     # print("Fin de lecture du fichier PDB.")
@@ -305,6 +368,7 @@ if __name__ == "__main__":
     # print(f"Proportion exposées par résidu:")
     # for idx, region in enumerate(solvated_region_2):
     #     print(f"Proportion exposée du résidu {idx} : {region}%")
+
     # Display the current date of run
     today = datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
     FILE = "Data/2c8r.pdb"
@@ -315,7 +379,7 @@ if __name__ == "__main__":
         print("This file does not exist. Please check the file path.\
             \nExit")
         sys.exit()
-        
+
     with open(FILE, "r") as pdb_file:
         line = pdb_file.readline()
         while not line.startswith("ATOM"):
@@ -334,7 +398,8 @@ if __name__ == "__main__":
         atom = Atom(element=element,position=position,index=index)
         # print(atom.__dict__)
 
-        print("Generating point")
+        print("Generating Sphere points...")
+        time.sleep(2)
         atom.points = saff_kuijlaars_points(92,atom.position,atom.radius)
         print(atom.points)
 
