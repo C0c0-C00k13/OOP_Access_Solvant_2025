@@ -51,6 +51,8 @@ class Atom:
         element (str): Chemical element symbol (e.g., 'C', 'O').
         position (np.ndarray): 3D coordinates of the atom.
         radius (float): van der Waals radius of the atom.
+        points (np.array): 3D coordinates of the points of the atom
+        self.exposed_points (int): number of points exposed to solvant
         asa (float): Solvent-accessible surface area (in Å²), default is 0.0.
         index (int): Atom index (optional, useful for tracking).
     """
@@ -67,7 +69,7 @@ class Atom:
     #     return f"Atom({self.index}, {self.element}, ASA={self.asa:.2f})"
 
     def __str__(self):
-        return f"Atom({self.index}, {self.element}, ASA = {self.asa:.2f}, radius={self.radius})"
+        return f"Atom({self.index}, {self.element}, ASA = {self.asa:.2f} Å², radius={self.radius})"
 
 
 if __name__ == "__main__":

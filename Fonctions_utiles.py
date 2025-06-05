@@ -25,7 +25,7 @@ VAN_DER_WAALS_RADII = {
 def get_atoms(file:str):
     """Returns list of atoms from a PDB file.
     
-    Args
+    Parameters
     ---
     file : str
     
@@ -52,36 +52,16 @@ def get_atoms(file:str):
 
     return tuple(atoms)
 
-def get_1st_atom(file:str):
-    """Returns the 1st atom of the PDB file."""
-    with open(file, "r") as pdb_file:
-        line = pdb_file.readline()
-        while not line.startswith("ATOM"):
-            line = pdb_file.readline()
-        # print(line.strip())
-        # Index
-        index = int(line.strip().split()[1])
-        # Coordinates
-        coord_z = float(line.strip().split()[-6])
-        coord_y = float(line.strip().split()[-5])
-        coord_x = float(line.strip().split()[-4])
-        position = (coord_x,coord_y,coord_z)
-        # Element
-        element = line.strip().split()[-1]
-        # print(f"Index:{index}; Position:{position}; Element:{element}")
-        atom = Atom(element=element,position=position,index=index)
-        # print(atom.__dict__)
-        return atom
 
-# ------------------------
 def saff_kuijlaars_points(n, center=(0.0,0.0,0.0), radius=0.0):
     """
-    Génère N points quasi-uniformes sur une sphère unitaire
-    à l'aide de l'algorithme de Saff et Kuijlaars.
+    Generates a n-points quasi-uniform sphere based on Saff and Kuijlaars algorithm.
 
-    Args
+    Parameters
     ---
-    n (int): Nombre de points à générer.
+    n (int): Number of points to generate.
+    center (np.array) : Coordinates of the center of the sphere. Default value : (0.0,0.0,0.0).
+    radius (float) : Radius of the atom. Default value : 0.0.
 
     Returns
     ---
@@ -107,125 +87,36 @@ def saff_kuijlaars_points(n, center=(0.0,0.0,0.0), radius=0.0):
 
     return points
 
-def display_sphere(atom:Atom):
-    """Displays the sphere representing an atom"""
-    points = atom.points
-    # Plotting
-    fig = plt.figure(figsize=(8, 8))
-    ax = fig.add_subplot(111, projection='3d')
-    ax.scatter(points[:, 0], points[:, 1], points[:, 2], s=3, alpha=0.6)
-    ax.set_title(f"Sphere of {len(atom.points)} Points\
-                (center={atom.position}, radius={atom.radius})")
-    ax.set_box_aspect([1, 1, 1])
-    plt.show()
 
 def distance(point_a, point_b)->float:
-    """Calculates distance between 2 points"""
+    """Calculates distance between 2 points
+    
+    Parameters
+    ---
+    point_a : Coordinates from either a point of a an atom or an atom.
+    point_b : Coordinates from either a point of a an atom or an atom.
+    
+    Returns
+    ---
+    distance (float) : Distance from 2 points (a, b).
+    """
     return math.sqrt(sum((point_a[i]-point_b[i])**2 for i in range(3)))
-
-def comparaisonDistances(atom:Atom, list_points, totale_atoms):
-    """Returns a list of points exposed to solvant based on
-    distances au reste des atomes.
-
-    Parameters
-    ------
-    atom : Atom
-        Atome auquel les points sont reliés
-    pts_atom : list
-        Liste des points reliés à l'objet atom
-    totale_atoms : list
-        Ensemble des atomes contenus dans la protéine
-    Returns
-    ------
-    list
-        Liste des points exposés au solvant rattachés à atom. 
-    """
-
-    # Le seuil fixe correspond à la taille d'un atome d'oxygène
-    liste_points_solvant = [] 
-    SEUIL = 1.4
-    # Comparer les distances
-    for pt in list_points:
-        # Au debut de la comparaison, un veariable vaut 0.
-        condition_solvate = True
-        for at_tot in totale_atoms:
-            # Calcul des points pour chaque atome + renvoei d'une liste de points
-            if at_tot == atom:
-            # print(f"atom trouve en position {cpt_tot_at}")
-                pass
-            else:
-                # print(f"Residu/atom {cpt_at_per_res+1, atom.element};\
-                # Distance {pt.calcul_distance(atom=at_tot)}")
-                if pt.calcul_distance(atom=at_tot) < SEUIL:
-                    condition_solvate = False
-        if condition_solvate:
-            liste_points_solvant.append(pt)
-    return liste_points_solvant
-
-# fonction renvoyant les points exposés au solvant pour un residu
-def Exposition_point_par_solvant(list_atome):
-    """Associe à chaque atome l'ensemble de ses points exposés au solvant dans un nouvel attribut: liste_points_solvant.
-    Parameters
-    ------
-    list_atome : list
-        liste des atomes de la protéine. Les atomes sont groupés par les résidu.
-    Returns
-    ------
-    None
-    """
-    # Liste de tous les atomes de protéines. Non séparés par résidu
-    TOTALE_ATOMS = []
-    for res in list_atome:
-        TOTALE_ATOMS = TOTALE_ATOMS + res
-    points = saff_kuijlaars_points(92)
-
-    for res in list_atome:
-        for atome in res:
-            atome.liste_points_solvant = []
-            # list_points = minifuction(atome=atome, points=points)
-            # atome.liste_points_solvant = comparaisonDistances(atome, list_points, TOTALE_ATOMS)
-    # for res in list_atome:
-    #     print(res)
-    #     for atome in res:
-    #         print(atome,len(atome.liste_points_solvant))
-
-
-# ---------------------------------------------------------------------------------
-# ------------------------------------
-# import math
-
-# Example input: list of atoms (x, y, z, element)
-atoms = [
-    (0.0, 0.0, 0.0, 'C'),
-    (2.0, 0.0, 0.0, 'O'),
-    (0.0, 2.0, 0.0, 'N'),
-]
-
-# van der Waals radii (Å)
-vdw_radii = {
-    'H': 1.20, 'C': 1.70, 'N': 1.55, 'O': 1.52, 'S': 1.80
-}
-
-probe_radius = 1.4  # Water probe radius
-n_surface_points = 100  # More points = better accuracy
-
-def generate_sphere_points(n):
-    points = []
-    for i in range(n):
-        phi = math.acos(1 - 2*(i+0.5)/n)
-        theta = math.pi * (1 + 5**0.5) * (i+0.5)
-        x = math.sin(phi) * math.cos(theta)
-        y = math.sin(phi) * math.sin(theta)
-        z = math.cos(phi)
-        points.append((x, y, z))
-    return points
-
-sphere_points = generate_sphere_points(n_surface_points)
-
 
 
 def calculate_asa(current_atom, atoms_list, probe_radius=1.4)->float:
-    """Calculates ASA of 1 atom."""
+    """Calculates ASA of 1 atom.
+    
+    Parameters
+    ---
+    current_atom (Atom) : Atom currently processed. Its attribute 'points' \
+    cannot be empty (type : (np.array)).
+    atoms_list ([Atom]) : List of atoms from the PDB file.
+    probe_radius (float) : Radius of the probe (Oxygen atom). Default value : 1.4 Å.
+
+    Returns
+    ---
+    asa (float) : ASA of the current atom.
+    """
 
     # Radius of current atom
     threshold_radius = current_atom.radius + probe_radius
@@ -233,34 +124,18 @@ def calculate_asa(current_atom, atoms_list, probe_radius=1.4)->float:
 
     # Runs through the list of points of current atom
     for point in current_atom.points:
-        # print(point)
         exposed = True
         # Runs through the list of atoms
         for atom_i in atoms_list:
             if current_atom.index != atom_i.index:
-                # print(f"Processing atom: {atom_i}")
                 if distance(point, atom_i.position) < threshold_radius:
                     exposed = False
                     break
                 if exposed:
-                    # print(point, atom_i)
                     accessible_points += 1
-    print(accessible_points, len(current_atom.points))
     # Surface area of full sphere * exposed fraction
     sphere_area = 4 * math.pi * threshold_radius**2
-    # print(sphere_area)
-    # print(sphere_area * (accessible_points / len(current_atom.points)))
-    # asa = sphere_area * (accessible_points / len(current_atom.points))
-    # return asa
     return sphere_area * (accessible_points / len(current_atom.points))
-
-# --- EXECUTION
-# Run ASA calculation
-# asa_results = calculate_asa(atoms)
-
-# Output results
-# for i, elem, asa in asa_results:
-#     print(f"Atom {i} ({elem}): ASA = {asa} Å²")
 
 
 # Max ASA values (Tien et al. 2013)
@@ -282,14 +157,14 @@ asa_data = [
 ]
 
 # Calculate RSA
-rsa_data = []
-for res_id, aa, asa in asa_data:
-    max_val = max_asa.get(aa)
-    if max_val:
-        rsa = asa / max_val
-        rsa_data.append((res_id, aa, asa, round(rsa, 3)))
-    else:
-        rsa_data.append((res_id, aa, asa, None))
+# rsa_data = []
+# for res_id, aa, asa in asa_data:
+#     max_val = max_asa.get(aa)
+#     if max_val:
+#         rsa = asa / max_val
+#         rsa_data.append((res_id, aa, asa, round(rsa, 3)))
+#     else:
+#         rsa_data.append((res_id, aa, asa, None))
 
 # --- EXECUTION
 # Print results
@@ -328,60 +203,49 @@ if __name__ == "__main__":
         VAN_DER_WAALS_RADII = get_radii(FILE_RADIUS)
     else:
         print(f"This file does not exist. Default values:\n{VAN_DER_WAALS_RADII}.")
-    
+
     # time.sleep(2)
     # -------------------------------------------
     # READ PDB FILE
-    atom_1 = get_1st_atom(FILE_PDB)
-    # print(atom_1)
-
     print("Reading PDB file...")
     atoms = get_atoms(FILE_PDB)
     # print(atoms)
     print("Reading PDB file - Done.")
-    atom = atoms[1]
+    atom_1, atom = atoms[0], atoms[1]
     # print(atom)
 
     # time.sleep(2)
     # -------------------------------------------
-    # GENEREATE SPHERE
-    print("Generating Sphere points...")
-    NUMBER_OF_POINTS = 92
-    # time.sleep(2)
-    # print(type(atom), atom.radius, type(atom.radius))
-    atom.points = saff_kuijlaars_points(NUMBER_OF_POINTS, atom.position, atom.radius)
-    print("Generating Sphere points - DONE")
-    # print(atom.points)
-
-    # time.sleep(2)
-    # -------------------------------------------
     # CALCULATE ASA
-    distance_i = distance(atom.position,atom_1.position)
-    print(f"Distance between atom n°{atom.index} and n°{atom_1.index}:\
-{distance_i} Angstrom.")
-
-    # -- UNIQUE TEST
-    atom.asa = calculate_asa(current_atom=atom, atoms_list=atoms)
-    print(atom)
-
-    # GENERAL TEST
-    for atom_i in atoms:
+    # -- GENERAL TEST
+    NUMBER_OF_POINTS = 92
+    print("Calculating ASA...")
+    for atom_i in atoms[:10]:
         print(atom_i)
+        # GENEREATE SPHERE
+        # print("Generating Sphere points...")
         atom_i.points = saff_kuijlaars_points(NUMBER_OF_POINTS, atom_i.position, atom_i.radius)
+        # print("Generating Sphere points - DONE")
         atom_i.asa = calculate_asa(current_atom=atom_i, atoms_list=atoms)
-        print(atom_i)
+        # print(atom_i)
+    print("Calculating ASA - Done")
 
+    # -------------------------------------------
+    # CALCULATE RSA
+    rsa_data = []
+    for res_id, aa, asa in asa_data:
+        max_val = max_asa.get(aa)
+        if max_val:
+            rsa = asa / max_val
+            rsa_data.append((res_id, aa, asa, round(rsa, 3)))
+        else:
+            rsa_data.append((res_id, aa, asa, None))
 
+    # Print results
+    for res_id, aa, asa, rsa in rsa_data:
+        print(f"Residue {res_id} ({aa}): ASA = {asa:.2f},\
+RSA = {rsa if rsa is not None else 'N/A'}")
 
-
-    # print("Début du calcul d'exposition dela protéine au solvant")
-    # Exposition_point_par_solvant(list_atome=list_atome)
-
-    # # Liste de tous les atomes de protéines. Non séparés par résidu
-    # TOTALE_ATOMS = []
-    # for res in list_atome:
-    #     TOTALE_ATOMS = TOTALE_ATOMS + res
-    # TOTAL_POINTS = 92 * len(TOTALE_ATOMS)
 
     # # Pourcentage de la protéine esposée au solvant
     # solvated_region = 0
