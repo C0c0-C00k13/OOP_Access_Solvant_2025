@@ -37,11 +37,11 @@ def get_radii(filename: str):
                         atom_i = "S"
                     if atom_i not in atoms:
                         # Atom : Radius
-                        atoms[atom_i] = integrate_line.strip().split()[2]
+                        atoms[atom_i] = float(integrate_line.strip().split()[2])
     return atoms
 
 
-def get_radius(radii_reference, element:str):
+def get_radius(radii_reference, element:str)->float:
     """Returns the radius of an element"""
     return radii_reference[element]
 
