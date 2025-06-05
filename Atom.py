@@ -58,19 +58,15 @@ class Atom:
         self.element = element
         self.position = np.array(position)
         self.index = index
-        self.radius = VAN_DER_WAALS_RADII.get(element, 1.5)  # default if unknown
+        self.radius = Get__Radii.get_radius(VAN_DER_WAALS_RADII, element)  # default if unknown
         self.points = None # will be filled after Sphere generation
         self.asa = 0.0  # will be filled after ASA calculation
-
-    def distance_to(self, other):
-        """Compute Euclidean distance to another Atom."""
-        return np.linalg.norm(self.position - other.position)
 
     # def __repr__(self):
     #     return f"Atom({self.index}, {self.element}, ASA={self.asa:.2f})"
 
     def __str__(self):
-        return f"Atom({self.index}, {self.element}, ASA = {self.asa:.2f})"
+        return f"Atom({self.index}, {self.element}, ASA = {self.asa:.2f}, radius={self.radius})"
 
 
 if __name__ == "__main__":
