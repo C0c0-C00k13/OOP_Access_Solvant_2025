@@ -6,8 +6,10 @@ import time
 import datetime
 import math
 import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
 from Atom import Atom
-from point_atome import PointAtom
 from Get__Radii import get_radii
 
 
@@ -105,93 +107,17 @@ def saff_kuijlaars_points(n, center=(0.0,0.0,0.0), radius=0.0):
 
     return points
 
-# -------------- TO SUPPRESS
-#     import numpy as np
-# import matplotlib.pyplot as plt
-# from mpl_toolkits.mplot3d import Axes3D
-
-# def generate_sphere_points(n_points, center, radius):
-#     """
-#     Generates quasi-uniform points on the surface of a sphere using
-#     a Fibonacci lattice approach (inspired by Kuijlaars methods).
-
-#     Args:
-#         n_points (int): Number of points to generate on the sphere.
-#         center (tuple): (x, y, z) coordinates of the sphere center.
-#         radius (float): Radius of the sphere.
-
-#     Returns:
-#         np.ndarray: Array of shape (n_points, 3) with 3D coordinates.
-#     """
-#     offset = 2.0 / n_points
-#     increment = np.pi * (3.0 - np.sqrt(5.0))  # Golden angle in radians
-
-#     points = []
-
-#     for i in range(n_points):
-#         y = ((i * offset) - 1) + (offset / 2)
-#         r = np.sqrt(1 - y * y)
-
-#         phi = i * increment
-
-#         x = np.cos(phi) * r
-#         z = np.sin(phi) * r
-
-#         # Scale and translate to desired center and radius
-#         x = center[0] + radius * x
-#         y = center[1] + radius * y
-#         z = center[2] + radius * z
-
-#         points.append((x, y, z))
-
-#     return np.array(points)
-
-# # Example usage
-# if __name__ == "__main__":
-#     n = 1000  # Number of points
-#     center = (1.0, 2.0, 3.0)  # Sphere center
-#     radius = 5.0  # Sphere radius
-
-#     points = generate_sphere_points(n, center, radius)
-
-#     # Plotting
-#     fig = plt.figure(figsize=(8, 8))
-#     ax = fig.add_subplot(111, projection='3d')
-#     ax.scatter(points[:, 0], points[:, 1], points[:, 2], s=3, alpha=0.6)
-#     ax.set_title(f"Sphere of {n} Points (center={center}, radius={radius})")
-#     ax.set_box_aspect([1, 1, 1])
-#     plt.show()
-
-# ------------------------
-# p1 = PointAtom(totale_atoms[0], 1.0,2.0,3.5)
-# p1.calcul_distance(totale_atoms[4])
-# totale_atoms[0] - totale_atoms[1]
-
-
-def minifuction(atome,points):
-    """Génère une liste de points représantant un atome de la proteine
-    Parameters
-    ------
-    atome : Bio.PDB.Atom
-        Atome auquel les points seront attachés.
-    points : list
-        Liste de points. 
-    Returns
-    ------
-    list
-        Liste des contenant les points rattachés à l'atome.
-    """
-
-    liste_point_coord = []
-    for index,coord in enumerate(points):
-        new_point = PointAtom(atom_center=atome,\
-                                x_pt=coord[0]+atome.coord[0],\
-                                y_pt=coord[1]+atome.coord[1],\
-                                z_pt= coord[2]+atome.coord[2])
-        liste_point_coord.append(new_point)
-        # print(index, new_point)
-    return liste_point_coord
-    # print(len(liste_point_coord), liste_point_coord)
+def display_sphere(atom:Atom):
+    """Displays the sphere representing an atom"""
+    points = atom.points
+    # Plotting
+    fig = plt.figure(figsize=(8, 8))
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(points[:, 0], points[:, 1], points[:, 2], s=3, alpha=0.6)
+    ax.set_title(f"Sphere of {len(atom.points)} Points\
+                (center={atom.position}, radius={atom.radius})")
+    ax.set_box_aspect([1, 1, 1])
+    plt.show()
 
 def distance(a, b):
     """Calculates distance between 2 points"""
@@ -254,8 +180,8 @@ def Exposition_point_par_solvant(list_atome):
     for res in list_atome:
         for atome in res:
             atome.liste_points_solvant = []
-            pts_atome = minifuction(atome=atome, points=points)
-            atome.liste_points_solvant = comparaisonDistances(atome, pts_atome, TOTALE_ATOMS)
+            # pts_atome = minifuction(atome=atome, points=points)
+            # atome.liste_points_solvant = comparaisonDistances(atome, pts_atome, TOTALE_ATOMS)
     # for res in list_atome:
     #     print(res)
     #     for atome in res:
@@ -366,11 +292,49 @@ for res_id, aa, asa in asa_data:
 
 if __name__ == "__main__":
 
-    # protein1 = ("2C8Q","./Data/insuline.pdb")
-    # print("Début de lecture du fichier PDB.")
-    # list_atome = PDBRetrieve_Atoms(protein1[0],protein1[1])
 
+    # Display the current date of run
+    today = datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+    FILE_PDB = "Data/2c8r.pdb"
+    # Checking if the file exists
+    IS_EXIST = os.path.exists(FILE_PDB)
+    print(f"Date of execution : {today}")
+    if not IS_EXIST:
+        print("This file does not exist. Please check the file path.\
+            \nExit")
+        sys.exit()
+
+    # List radii
+    FILE_RADIUS = "./Data/vdw.radii"
+
+    IS_EXIST = os.path.exists(FILE_RADIUS)
+    if IS_EXIST:
+        # print('MAIN EXECUTION')
+        # print(f"Radii references: '{FILE_RADIUS}' found...")
+        time.sleep(1)
+        VAN_DER_WAALS_RADII = get_radii(FILE_RADIUS)
+    else:
+        print(f"This file does not exist. Default values:\n{VAN_DER_WAALS_RADII}.")
+    time.sleep(2)
+
+    atom_1 = get_1st_atom(FILE_PDB)
+    # print(atom_1)
+
+    # print("Début de lecture du fichier PDB.")
+    atoms = get_atoms(FILE_PDB)
     # print("Fin de lecture du fichier PDB.")
+    atom = atoms[1]
+    # print(atom)
+
+
+    print("Generating Sphere points...")
+    NUMBER_OF_POINTS = 92
+    # time.sleep(2)
+    # print(type(atom), atom.radius, type(atom.radius))
+    atom.points = saff_kuijlaars_points(NUMBER_OF_POINTS,atom.position,atom.radius)
+    # print(atom.points)
+
+
     # print("Début du calcul d'exposition dela protéine au solvant")
     # Exposition_point_par_solvant(list_atome=list_atome)
 
@@ -396,48 +360,9 @@ if __name__ == "__main__":
     #     tmp = solvated_region_per_res/ total_point_per_res * 100
     #     solvated_region_2.append(tmp)
 
-
     # print(f"Proportion de protéine au solvant exposée :{solvated_region/(TOTAL_POINTS)*100}%.")
     # print(f"Proportion exposées par résidu:")
     # for idx, region in enumerate(solvated_region_2):
     #     print(f"Proportion exposée du résidu {idx} : {region}%")
-
-    # Display the current date of run
-    today = datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
-    FILE = "Data/2c8r.pdb"
-    # Checking if the file exists
-    IS_EXIST = os.path.exists(FILE)
-    print(f"Date of execution : {today}")
-    if not IS_EXIST:
-        print("This file does not exist. Please check the file path.\
-            \nExit")
-        sys.exit()
-
-    # List radii
-    FILENAME = "./Data/vdw.radii"
-
-    # IS_EXIST = os.path.exists(FILENAME)
-    # if IS_EXIST:
-    #     # print('MAIN EXECUTION')
-    #     # print(f"Radii references: '{FILENAME}' found...")
-    #     time.sleep(1)
-    #     VAN_DER_WAALS_RADII = get_radii(FILENAME)
-    # else:
-    #     print(f"This file does not exist. Default values:\n{VAN_DER_WAALS_RADII}.")
-    # time.sleep(2)
-
-    atom_1 = get_1st_atom(FILE)
-    # print(atom_1)
-
-    atoms = get_atoms(FILE)
-    atom = atoms[1]
-    # print(atom)
-
-
-    print("Generating Sphere points...")
-    # time.sleep(2)
-    # print(type(atom), atom.radius, type(atom.radius))
-    atom.points = saff_kuijlaars_points(92,atom.position,atom.radius)
-    print(atom.points)
 
     print("Fin d'éxecution.")
