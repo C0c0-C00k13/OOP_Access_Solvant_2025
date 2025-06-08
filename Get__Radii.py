@@ -25,19 +25,28 @@ def get_radii(filename: str):
 
     atoms = {}
     with open(filename, 'r') as radii_file :
-        for line in radii_file:
-            integrate_line = radii_file.readline()
+        is_heteroatom = False
+        for integrate_line in radii_file:
 
             if not integrate_line.startswith('#') and not integrate_line.startswith("\n"):
                 # New residu
 
+                if integrate_line.startswith("RESIDUE"):
+                    if integrate_line.strip().split()[1] == "HETATM":
+                       is_heteroatom = True
+                    else:
+                       is_heteroatom = False
                 if integrate_line.startswith("ATOM"):
                     atom_i = integrate_line.strip().split()[1]
-                    if atom_i == "SD" or atom_i == "SG":
-                        atom_i = "S"
+                    if is_heteroatom and atom_i == "N":
+                        atom_i = "".join(integrate_line.strip().split()[1:3])
+                        # print(atom_i)
                     if atom_i not in atoms:
                         # Atom : Radius
-                        atoms[atom_i] = float(integrate_line.strip().split()[2])
+                        if is_heteroatom and atom_i[0] == "N":
+                            atoms[atom_i] = float(integrate_line.strip().split()[3])
+                        else:
+                            atoms[atom_i] = float(integrate_line.strip().split()[2])
     return atoms
 
 
@@ -55,35 +64,11 @@ if __name__ == "__main__":
     if IS_EXIST:
         print(f"Radii references: '{FILENAME}' found...")
         time.sleep(2)
-    #     VAN_DER_WAALS_RADII = get_radii(FILENAME)
-    # else:
-    #     print(f"This file does not exist. Default values:\n{VAN_DER_WAALS_RADII}.")
-    # time.sleep(2)
+        VAN_DER_WAALS_RADII = get_radii(FILENAME)
+    else:
+        print(f"This file does not exist. Default values:\n{VAN_DER_WAALS_RADII}.")
+    time.sleep(2)
 
-    # for atom in VAN_DER_WAALS_RADII:
-    #     radius = get_radius(VAN_DER_WAALS_RADII, atom)
-    #     print(atom,":",radius)
-
-    list_residues = []
-    residues = {}
-    atom = {}
-    atoms = []
-    with open(FILENAME, 'r') as radii_file :
-        # ILE_STATEMENT = False
-        residue, atom_name, radius, polarity = None, None, None, None
-        for line in radii_file:
-            # Ignore Header/ Footer and Empty line
-            if not line.startswith("#") and not line.startswith("\n"):
-                if line.startswith("RESIDUE"):
-                    residue = line.strip().split()[2]
-                    # print(residue)
-                if line.startswith("ATOM"):
-                    atom_name = line.strip().split()[1]
-                    if residue == "HEM" and "N" == atom_name:
-                        atom_name = " ".join(line.strip().split()[1:2])
-                        radius = float(line.strip().split()[3])
-                        polarity = int(line.strip().split()[4])
-                    else:
-                        radius = float(line.strip().split()[2])
-                        polarity = int(line.strip().split()[3])
-                    atom[atom_name] = {'polarity' : polarity, 'radius' : radius}
+    for atom in VAN_DER_WAALS_RADII:
+        radius = get_radius(VAN_DER_WAALS_RADII, atom)
+        print(atom,":",radius)
