@@ -48,7 +48,10 @@ class Atom:
     A class to represent a single atom in a molecular structure.
 
     Attributes:
-        element (str): Chemical element symbol (e.g., 'C', 'O').
+        element (str): Chemical element name (e.g., 'CG1').
+        atom_type (str): Chemical element symbol (e.g., 'C', 'O').
+        chain (str) : Chain the residues (e.g., 'A', 'B').
+        id_res (int) : Number of the residue in the protein.
         position (np.ndarray): 3D coordinates of the atom.
         radius (float): van der Waals radius of the atom.
         points (np.array): 3D coordinates of the points of the atom
@@ -56,8 +59,12 @@ class Atom:
         asa (float): Solvent-accessible surface area (in Å²), default is 0.0.
         index (int): Atom index (optional, useful for tracking).
     """
-    def __init__(self, element:str,  position, index=None):
+    def __init__(self, element:str, atom_type:str, chain:str, id_res:int, residue:str, position, index=None):
         self.element = element
+        self.atom_type = atom_type
+        self.chain = chain
+        self.id_res = id_res
+        self.residue = residue
         self.position = np.array(position)
         self.index = index
         self.radius = Get__Radii.get_radius(VAN_DER_WAALS_RADII, element)  # default if unknown
@@ -69,7 +76,9 @@ class Atom:
     #     return f"Atom({self.index}, {self.element}, ASA={self.asa:.2f})"
 
     def __str__(self):
-        return f"Atom({self.index}, {self.element}, ASA = {self.asa:.2f} Å², radius={self.radius})"
+        return f"Atom n°{self.index}: {self.element}; atom type:{self.atom_type};\
+from residue n°{self.id_res}: {self.residue} from chain {self.chain};\
+ASA = {self.asa:.2f} Å², radius={self.radius} Å)"
 
 
 if __name__ == "__main__":
@@ -94,15 +103,22 @@ if __name__ == "__main__":
                 # print(line.strip().split())
                 # Index
                 index = int(line.strip().split()[1])
-                # Coordinates
-                coord_z = float(line.strip().split()[-6])
-                coord_y = float(line.strip().split()[-5])
-                coord_x = float(line.strip().split()[-4])
-                position = (coord_x,coord_y,coord_z)
                 # Element
-                element = line.strip().split()[-1]
+                element = line.strip().split()[2]
+                atom_type = line.strip().split()[-1]
+                # Residue
+                residue = line.strip().split()[3]
+                chain = line.strip().split()[4]
+                id_res = line.strip().split()[5]
+                # Coordinates
+                coord_z = float(line.strip().split()[8])
+                coord_y = float(line.strip().split()[7])
+                coord_x = float(line.strip().split()[6])
+                position = (coord_x,coord_y,coord_z)
                 # print(f"Index:{index}; Position:{position}; Element:{element}")
-                atom = Atom(element=element,position=position,index=index)
+                atom = Atom(element=element, atom_type=atom_type,chain=chain,
+                            id_res=id_res,residue=residue,position=position,
+                            index=index)
                 # print(atom.__dict__)
                 print(atom)
 
