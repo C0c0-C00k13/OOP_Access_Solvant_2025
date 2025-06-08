@@ -6,8 +6,6 @@ import time
 import datetime
 import math
 import numpy as np
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 
 from Atom import Atom
 from Get__Radii import get_radii
@@ -38,16 +36,25 @@ def get_atoms(file:str):
     with open(file, "r") as pdb_file:
         for line in pdb_file:
             if line.startswith("ATOM"):
+                # print(line.strip().split())
                 # Index
                 index = int(line.strip().split()[1])
-                # Coordinates
-                coord_z = float(line.strip().split()[-6])
-                coord_y = float(line.strip().split()[-5])
-                coord_x = float(line.strip().split()[-4])
-                position = (coord_x,coord_y,coord_z)
                 # Element
-                element = line.strip().split()[-1]
-                atom = Atom(element=element,position=position,index=index)
+                element = line.strip().split()[2]
+                atom_type = line.strip().split()[-1]
+                # Residue
+                residue = line.strip().split()[3]
+                chain = line.strip().split()[4]
+                id_res = line.strip().split()[5]
+                # Coordinates
+                coord_z = float(line.strip().split()[8])
+                coord_y = float(line.strip().split()[7])
+                coord_x = float(line.strip().split()[6])
+                position = (coord_x,coord_y,coord_z)
+                # print(f"Index:{index}; Position:{position}; Element:{element}")
+                atom = Atom(element=element, atom_type=atom_type,chain=chain,
+                            id_res=id_res,residue=residue,position=position,
+                            index=index)
                 atoms.append(atom)
 
     return tuple(atoms)
@@ -221,30 +228,48 @@ if __name__ == "__main__":
     NUMBER_OF_POINTS = 92
     print("Calculating ASA...")
     for atom_i in atoms[:10]:
-        print(atom_i)
         # GENEREATE SPHERE
         # print("Generating Sphere points...")
         atom_i.points = saff_kuijlaars_points(NUMBER_OF_POINTS, atom_i.position, atom_i.radius)
         # print("Generating Sphere points - DONE")
+
         atom_i.asa = calculate_asa(current_atom=atom_i, atoms_list=atoms)
         # print(atom_i)
     print("Calculating ASA - Done")
 
-    # -------------------------------------------
-    # CALCULATE RSA
-    rsa_data = []
-    for res_id, aa, asa in asa_data:
-        max_val = max_asa.get(aa)
-        if max_val:
-            rsa = asa / max_val
-            rsa_data.append((res_id, aa, asa, round(rsa, 3)))
-        else:
-            rsa_data.append((res_id, aa, asa, None))
+    print("Reading Total ASA...")
+    filename_data = "./Data/standard.data"
+    IS_EXIST = os.path.exists(filename_data)
+    if IS_EXIST:
+        print(f"Max ASA references: '{filename_data}' found...")
+        time.sleep(1)
+        max_asa = {}
+        with open(filename_data, 'r') as standard_file:
 
-    # Print results
-    for res_id, aa, asa, rsa in rsa_data:
-        print(f"Residue {res_id} ({aa}): ASA = {asa:.2f},\
-RSA = {rsa if rsa is not None else 'N/A'}")
+            for line in standard_file:
+                if line.startswith("ATOM"):
+                    tab_line = line.strip().split()
+                    residue = tab_line[3]
+                    max_asa.update({residue : tab_line[4:]})
+    else:
+        print(f"This file does not exist. Default values:\n{max_asa}.")
+    print(max_asa)
+    print("Reading Total ASA file - Done.")
+    # -------------------------------------------
+#     # CALCULATE RSA
+#     rsa_data = []
+#     for res_id, aa, asa in asa_data:
+#         max_val = max_asa.get(aa)
+#         if max_val:
+#             rsa = asa / max_val
+#             rsa_data.append((res_id, aa, asa, round(rsa, 3)))
+#         else:
+#             rsa_data.append((res_id, aa, asa, None))
+
+#     # Print results
+#     for res_id, aa, asa, rsa in rsa_data:
+#         print(f"Residue {res_id} ({aa}): ASA = {asa:.2f},\
+# RSA = {rsa if rsa is not None else 'N/A'}")
 
 
     # # Pourcentage de la protéine esposée au solvant
