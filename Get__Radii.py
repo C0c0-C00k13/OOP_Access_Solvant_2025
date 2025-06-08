@@ -75,17 +75,15 @@ if __name__ == "__main__":
             # Ignore Header/ Footer and Empty line
             if not line.startswith("#") and not line.startswith("\n"):
                 if line.startswith("RESIDUE"):
-                    list_residues.append(residues)
-                    residues = {residue : atoms}
-                    print(f"{residues}\n")
-                    time.sleep(1)
                     residue = line.strip().split()[2]
-                    atom = {}
-                    atoms = []
-                    time.sleep(1)
+                    # print(residue)
                 if line.startswith("ATOM"):
                     atom_name = line.strip().split()[1]
-                    radius = float(line.strip().split()[2])
-                    polarity = int(line.strip().split()[3])
+                    if residue == "HEM" and "N" == atom_name:
+                        atom_name = " ".join(line.strip().split()[1:2])
+                        radius = float(line.strip().split()[3])
+                        polarity = int(line.strip().split()[4])
+                    else:
+                        radius = float(line.strip().split()[2])
+                        polarity = int(line.strip().split()[3])
                     atom[atom_name] = {'polarity' : polarity, 'radius' : radius}
-                    atoms.append(atom)
