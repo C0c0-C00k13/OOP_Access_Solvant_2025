@@ -55,11 +55,37 @@ if __name__ == "__main__":
     if IS_EXIST:
         print(f"Radii references: '{FILENAME}' found...")
         time.sleep(2)
-        VAN_DER_WAALS_RADII = get_radii(FILENAME)
-    else:
-        print(f"This file does not exist. Default values:\n{VAN_DER_WAALS_RADII}.")
-    time.sleep(2)
+    #     VAN_DER_WAALS_RADII = get_radii(FILENAME)
+    # else:
+    #     print(f"This file does not exist. Default values:\n{VAN_DER_WAALS_RADII}.")
+    # time.sleep(2)
 
-    for atom in VAN_DER_WAALS_RADII:
-        radius = get_radius(VAN_DER_WAALS_RADII, atom)
-        print(atom,":",radius)
+    # for atom in VAN_DER_WAALS_RADII:
+    #     radius = get_radius(VAN_DER_WAALS_RADII, atom)
+    #     print(atom,":",radius)
+
+    list_residues = []
+    residues = {}
+    atom = {}
+    atoms = []
+    with open(FILENAME, 'r') as radii_file :
+        # ILE_STATEMENT = False
+        residue, atom_name, radius, polarity = None, None, None, None
+        for line in radii_file:
+            # Ignore Header/ Footer and Empty line
+            if not line.startswith("#") and not line.startswith("\n"):
+                if line.startswith("RESIDUE"):
+                    list_residues.append(residues)
+                    residues = {residue : atoms}
+                    print(f"{residues}\n")
+                    time.sleep(1)
+                    residue = line.strip().split()[2]
+                    atom = {}
+                    atoms = []
+                    time.sleep(1)
+                if line.startswith("ATOM"):
+                    atom_name = line.strip().split()[1]
+                    radius = float(line.strip().split()[2])
+                    polarity = int(line.strip().split()[3])
+                    atom[atom_name] = {'polarity' : polarity, 'radius' : radius}
+                    atoms.append(atom)
