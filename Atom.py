@@ -26,21 +26,7 @@ import Get__Radii
 # Dictionary of van der Waals radii (in Ångströms)
 FILENAME = "./Data/vdw.radii"
 # Checking if the file exists
-IS_EXIST = os.path.exists(FILENAME)
-if IS_EXIST:
-    print(f"Radii references: '{FILENAME}' found...")
-    time.sleep(2)
-    VAN_DER_WAALS_RADII = Get__Radii.get_radii(FILENAME)
-else:
-    VAN_DER_WAALS_RADII = {
-        'H': 1.2,
-        'C': 1.7,
-        'N': 1.55,
-        'O': 1.52,
-        'S': 1.8
-    }
-    print(f"This file does not exist. Default values:\n{VAN_DER_WAALS_RADII}.")
-    time.sleep(2)
+VAN_DER_WAALS_RADII = Get__Radii.get_radii(FILENAME)
 
 
 class Atom:
@@ -59,7 +45,8 @@ class Atom:
         asa (float): Solvent-accessible surface area (in Å²), default is 0.0.
         index (int): Atom index (optional, useful for tracking).
     """
-    def __init__(self, element:str, atom_type:str, chain:str, id_res:int, residue:str, position, index=None):
+    def __init__(self, element:str, atom_type:str, chain:str, id_res:int,\
+                  residue:str, position, index=None):
         self.element = element
         self.atom_type = atom_type
         self.chain = chain

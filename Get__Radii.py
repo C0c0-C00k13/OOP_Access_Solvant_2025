@@ -2,15 +2,6 @@
 import time
 import os
 
-# Defaults Radii
-VAN_DER_WAALS_RADII = {
-    'H': 1.2,
-    'C': 1.7,
-    'N': 1.55,
-    'O': 1.52,
-    'S': 1.8
-}
-
 
 def get_radii(filename: str):
     """
@@ -23,30 +14,44 @@ def get_radii(filename: str):
         residues:Dict
     """
 
-    atoms = {}
-    with open(filename, 'r') as radii_file :
-        is_heteroatom = False
-        for integrate_line in radii_file:
+    # Checking if the file exists
+    IS_EXIST = os.path.exists(filename)
+    if IS_EXIST:
+        print(f"Radii references: '{filename}' found...")
+        time.sleep(2)
 
-            if not integrate_line.startswith('#') and not integrate_line.startswith("\n"):
-                # New residu
-
-                if integrate_line.startswith("RESIDUE"):
-                    if integrate_line.strip().split()[1] == "HETATM":
-                       is_heteroatom = True
-                    else:
-                       is_heteroatom = False
-                if integrate_line.startswith("ATOM"):
-                    atom_i = integrate_line.strip().split()[1]
-                    if is_heteroatom and atom_i == "N":
-                        atom_i = "".join(integrate_line.strip().split()[1:3])
-                        # print(atom_i)
-                    if atom_i not in atoms:
-                        # Atom : Radius
-                        if is_heteroatom and atom_i[0] == "N":
-                            atoms[atom_i] = float(integrate_line.strip().split()[3])
+        atoms = {}
+        with open(filename, 'r') as radii_file :
+            is_heteroatom = False
+            for integrate_line in radii_file:
+                if not integrate_line.startswith('#') and not integrate_line.startswith("\n"):
+                    # New residu
+                    if integrate_line.startswith("RESIDUE"):
+                        if integrate_line.strip().split()[1] == "HETATM":
+                            is_heteroatom = True
                         else:
-                            atoms[atom_i] = float(integrate_line.strip().split()[2])
+                            is_heteroatom = False
+                    if integrate_line.startswith("ATOM"):
+                        atom_i = integrate_line.strip().split()[1]
+                        if is_heteroatom and atom_i == "N":
+                            atom_i = "".join(integrate_line.strip().split()[1:3])
+                            # print(atom_i)
+                        if atom_i not in atoms:
+                            # Atom : Radius
+                            if is_heteroatom and atom_i[0] == "N":
+                                atoms[atom_i] = float(integrate_line.strip().split()[3])
+                            else:
+                                atoms[atom_i] = float(integrate_line.strip().split()[2]) 
+    else:
+        print(f"This file does not exist. Returns default values.")
+        # Defaults Radii
+        atoms = {
+            'H': 1.2,
+            'C': 1.7,
+            'N': 1.55,
+            'O': 1.52,
+            'S': 1.8
+        }
     return atoms
 
 
@@ -58,15 +63,7 @@ def get_radius(radii_reference, element:str)->float:
 if __name__ == "__main__":
     # Dictionary of van der Waals radii (in Ångströms)
     FILENAME = "./Data/vdw.radii"
-
-    # Checking if the file exists
-    IS_EXIST = os.path.exists(FILENAME)
-    if IS_EXIST:
-        print(f"Radii references: '{FILENAME}' found...")
-        time.sleep(2)
-        VAN_DER_WAALS_RADII = get_radii(FILENAME)
-    else:
-        print(f"This file does not exist. Default values:\n{VAN_DER_WAALS_RADII}.")
+    VAN_DER_WAALS_RADII = get_radii(FILENAME)
     time.sleep(2)
 
     for atom in VAN_DER_WAALS_RADII:

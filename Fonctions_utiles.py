@@ -144,15 +144,32 @@ def calculate_asa(current_atom, atoms_list, probe_radius=1.4)->float:
     sphere_area = 4 * math.pi * threshold_radius**2
     return sphere_area * (accessible_points / len(current_atom.points))
 
+def read_max_asa(filename:str):
+    """Returns max ASA for each residue."""
+    # Max ASA values (Tien et al. 2013)
+    max_asa = {
+        'A': 121.0, 'R': 265.0, 'N': 187.0, 'D': 187.0,
+        'C': 148.0, 'Q': 214.0, 'E': 214.0, 'G': 97.0,
+        'H': 216.0, 'I': 195.0, 'L': 191.0, 'K': 230.0,
+        'M': 203.0, 'F': 228.0, 'P': 154.0, 'S': 143.0,
+        'T': 163.0, 'W': 264.0, 'Y': 255.0, 'V': 165.0
+    }
+    IS_EXIST = os.path.exists(filename)
+    if IS_EXIST:
+        print(f"Max ASA references: '{filename}' found...")
+        time.sleep(1)
+        max_asa = {}
+        with open(filename, 'r') as standard_file:
 
-# Max ASA values (Tien et al. 2013)
-max_asa = {
-    'A': 121.0, 'R': 265.0, 'N': 187.0, 'D': 187.0,
-    'C': 148.0, 'Q': 214.0, 'E': 214.0, 'G': 97.0,
-    'H': 216.0, 'I': 195.0, 'L': 191.0, 'K': 230.0,
-    'M': 203.0, 'F': 228.0, 'P': 154.0, 'S': 143.0,
-    'T': 163.0, 'W': 264.0, 'Y': 255.0, 'V': 165.0
-}
+            for line in standard_file:
+                if line.startswith("ATOM"):
+                    tab_line = line.strip().split()
+                    residue = tab_line[3]
+                    max_asa.update({residue : tab_line[4:]})
+    else:
+        print(f"This file does not exist. Returns default values.")
+    return max_asa
+
 
 # Example ASA data (residue index, residue name, ASA value)
 asa_data = [
@@ -239,20 +256,7 @@ if __name__ == "__main__":
 
     print("Reading Total ASA...")
     filename_data = "./Data/standard.data"
-    IS_EXIST = os.path.exists(filename_data)
-    if IS_EXIST:
-        print(f"Max ASA references: '{filename_data}' found...")
-        time.sleep(1)
-        max_asa = {}
-        with open(filename_data, 'r') as standard_file:
-
-            for line in standard_file:
-                if line.startswith("ATOM"):
-                    tab_line = line.strip().split()
-                    residue = tab_line[3]
-                    max_asa.update({residue : tab_line[4:]})
-    else:
-        print(f"This file does not exist. Default values:\n{max_asa}.")
+    max_asa = read_max_asa(filename=filename_data)
     print(max_asa)
     print("Reading Total ASA file - Done.")
     # -------------------------------------------
