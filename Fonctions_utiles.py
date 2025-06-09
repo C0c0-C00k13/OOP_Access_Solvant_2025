@@ -172,12 +172,31 @@ def read_max_asa(filename:str):
     return max_asa
 
 
+def calculate_residue_asa(list_atoms):
+    """Calculates ASA of each residue"""
+    residues_asa = {}
+    # Run through atom list
+    for atom_i in list_atoms:
+        # Searches for the current residue
+        if atom_i.residue in residues_asa:
+            # Searches for the current residue index
+            if atom_i.id_res in residues_asa[atom_i.residue]:
+                new_asa_res = residues_asa[atom_i.residue][atom_i.id_res] + atom_i.asa
+                residues_asa[atom_i.residue][atom_i.id_res] = new_asa_res
+            # Creates a new emplacement for the residue index
+            else:
+                residues_asa[atom_i.residue].update({atom_i.id_res : atom_i.asa})
+        # Creates a new emplacement for the residue name
+        else:
+            residues_asa[atom_i.residue] = {atom_i.id_res : atom_i.asa}
+    return residues_asa
+
+
 def calculate_max_asa(list_atoms, probe_radius:float):
     """Calculates the max ASA of each residue."""
     max_asa = {}
     # Run through atom list
     for atom_i in list_atoms:
-        # res_index = f'{atom_i.residue}_{atom_i.id_res}'
         max_asa_atom = 4 * math.pi * (atom_i.radius + probe_radius)**2
         # Searches for the current residue
         if atom_i.residue in max_asa:
@@ -277,13 +296,25 @@ if __name__ == "__main__":
         # print(atom_i)
     print("Calculating ASA - Done")
 
+    # Calculating Residue ASA
+    print("Calculating Residue ASA...")
+    residues_asa = calculate_residue_asa(atoms)
+    print("Calculating Residue ASA - Done.")
+    print(residues_asa)
+
+    # Reading Total ASA
     print("Reading Total ASA...")
     # filename_data = "./Data/standard.data"
     # max_asa = read_max_asa(filename=filename_data)
+    print("Reading Total ASA file - Done.")
+
+    # Calculating Total ASA
+    print("Calculating Total ASA...")
     PROBE_RADIUS = 1.4
     max_asa = calculate_max_asa(list_atoms=atoms, probe_radius=PROBE_RADIUS)
+    print("Calculating Total ASA - Done.")
+
     print(max_asa)
-    print("Reading Total ASA file - Done.")
     # -------------------------------------------
 #     # CALCULATE RSA
 #     rsa_data = []
