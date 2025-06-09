@@ -144,6 +144,7 @@ def calculate_asa(current_atom, atoms_list, probe_radius=1.4)->float:
     sphere_area = 4 * math.pi * threshold_radius**2
     return sphere_area * (accessible_points / len(current_atom.points))
 
+
 def read_max_asa(filename:str):
     """Returns max ASA for each residue."""
     # Max ASA values (Tien et al. 2013)
@@ -169,6 +170,11 @@ def read_max_asa(filename:str):
     else:
         print(f"This file does not exist. Returns default values.")
     return max_asa
+
+
+# def calculate_max_asa():
+#     """"""
+#     continue
 
 
 # Example ASA data (residue index, residue name, ASA value)
@@ -244,7 +250,7 @@ if __name__ == "__main__":
     # -- GENERAL TEST
     NUMBER_OF_POINTS = 92
     print("Calculating ASA...")
-    for atom_i in atoms[:10]:
+    for atom_i in atoms:
         # GENEREATE SPHERE
         # print("Generating Sphere points...")
         atom_i.points = saff_kuijlaars_points(NUMBER_OF_POINTS, atom_i.position, atom_i.radius)
@@ -255,8 +261,28 @@ if __name__ == "__main__":
     print("Calculating ASA - Done")
 
     print("Reading Total ASA...")
-    filename_data = "./Data/standard.data"
-    max_asa = read_max_asa(filename=filename_data)
+    # filename_data = "./Data/standard.data"
+    # max_asa = read_max_asa(filename=filename_data)
+    PROBE_RADIUS = 1.4
+    # res_index = ""
+    max_asa = {}
+    # [atom.radius for ]
+    # Run through atom list
+    for atom_i in atoms:
+        # res_index = f'{atom_i.residue}_{atom_i.id_res}'
+        max_asa_atom = 4 * math.pi * (atom_i.radius + PROBE_RADIUS)**2
+        # Searches for the current residue
+        if atom_i.residue in max_asa:
+            # Searches for the current residue index
+            if atom_i.id_res in max_asa[atom_i.residue]:
+                new_max_asa_res = max_asa[atom_i.residue][atom_i.id_res] + max_asa_atom
+                max_asa[atom_i.residue][atom_i.id_res] = new_max_asa_res
+            # Creates a new emplacement for the residue index
+            else:
+                max_asa[atom_i.residue].update({atom_i.id_res : max_asa_atom})
+        # Creates a new emplacement for the residue name
+        else:
+            max_asa[atom_i.residue] = {atom_i.id_res : max_asa_atom}
     print(max_asa)
     print("Reading Total ASA file - Done.")
     # -------------------------------------------
@@ -297,4 +323,4 @@ if __name__ == "__main__":
     # for idx, region in enumerate(solvated_region_2):
     #     print(f"Proportion exposée du résidu {idx} : {region}%")
 
-    print("Fin d'éxecution.")
+    print("Done.")
