@@ -45,7 +45,7 @@ def get_atoms(file:str):
                 # Residue
                 residue = line.strip().split()[3]
                 chain = line.strip().split()[4]
-                id_res = line.strip().split()[5]
+                id_res = int(line.strip().split()[5])
                 # Coordinates
                 coord_z = float(line.strip().split()[8])
                 coord_y = float(line.strip().split()[7])
@@ -172,9 +172,26 @@ def read_max_asa(filename:str):
     return max_asa
 
 
-# def calculate_max_asa():
-#     """"""
-#     continue
+def calculate_max_asa(list_atoms, probe_radius:float):
+    """Calculates the max ASA of each residue."""
+    max_asa = {}
+    # Run through atom list
+    for atom_i in list_atoms:
+        # res_index = f'{atom_i.residue}_{atom_i.id_res}'
+        max_asa_atom = 4 * math.pi * (atom_i.radius + probe_radius)**2
+        # Searches for the current residue
+        if atom_i.residue in max_asa:
+            # Searches for the current residue index
+            if atom_i.id_res in max_asa[atom_i.residue]:
+                new_max_asa_res = max_asa[atom_i.residue][atom_i.id_res] + max_asa_atom
+                max_asa[atom_i.residue][atom_i.id_res] = new_max_asa_res
+            # Creates a new emplacement for the residue index
+            else:
+                max_asa[atom_i.residue].update({atom_i.id_res : max_asa_atom})
+        # Creates a new emplacement for the residue name
+        else:
+            max_asa[atom_i.residue] = {atom_i.id_res : max_asa_atom}
+    return max_asa
 
 
 # Example ASA data (residue index, residue name, ASA value)
@@ -264,25 +281,7 @@ if __name__ == "__main__":
     # filename_data = "./Data/standard.data"
     # max_asa = read_max_asa(filename=filename_data)
     PROBE_RADIUS = 1.4
-    # res_index = ""
-    max_asa = {}
-    # [atom.radius for ]
-    # Run through atom list
-    for atom_i in atoms:
-        # res_index = f'{atom_i.residue}_{atom_i.id_res}'
-        max_asa_atom = 4 * math.pi * (atom_i.radius + PROBE_RADIUS)**2
-        # Searches for the current residue
-        if atom_i.residue in max_asa:
-            # Searches for the current residue index
-            if atom_i.id_res in max_asa[atom_i.residue]:
-                new_max_asa_res = max_asa[atom_i.residue][atom_i.id_res] + max_asa_atom
-                max_asa[atom_i.residue][atom_i.id_res] = new_max_asa_res
-            # Creates a new emplacement for the residue index
-            else:
-                max_asa[atom_i.residue].update({atom_i.id_res : max_asa_atom})
-        # Creates a new emplacement for the residue name
-        else:
-            max_asa[atom_i.residue] = {atom_i.id_res : max_asa_atom}
+    max_asa = calculate_max_asa(list_atoms=atoms, probe_radius=PROBE_RADIUS)
     print(max_asa)
     print("Reading Total ASA file - Done.")
     # -------------------------------------------

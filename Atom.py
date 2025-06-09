@@ -50,7 +50,7 @@ class Atom:
         self.element = element
         self.atom_type = atom_type
         self.chain = chain
-        self.id_res = id_res
+        self.id_res = int(id_res)
         self.residue = residue
         self.position = np.array(position)
         self.index = index
@@ -96,7 +96,7 @@ if __name__ == "__main__":
                 # Residue
                 residue = line.strip().split()[3]
                 chain = line.strip().split()[4]
-                id_res = line.strip().split()[5]
+                id_res = int(line.strip().split()[5])
                 # Coordinates
                 coord_z = float(line.strip().split()[8])
                 coord_y = float(line.strip().split()[7])
