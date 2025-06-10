@@ -189,6 +189,11 @@ def calculate_residue_asa(list_atoms):
         # Creates a new emplacement for the residue name
         else:
             residues_asa[atom_i.residue] = {atom_i.id_res : atom_i.asa}
+
+    # Rounding the ASA to 3 decimals
+    for residue in residues_asa:
+        for index in residues_asa[residue]:
+            residues_asa[residue][index] = round(residues_asa[residue][index], 3)
     return residues_asa
 
 
@@ -261,73 +266,58 @@ if __name__ == "__main__":
     # CREATE RADII REFERENCES
     FILE_RADIUS = "./Data/vdw.radii"
 
-    IS_EXIST = os.path.exists(FILE_RADIUS)
-    if IS_EXIST:
-        # print('MAIN EXECUTION')
-        # print(f"Radii references: '{FILE_RADIUS}' found...")
-        time.sleep(1)
+    VAN_DER_WAALS_RADII = get_radii(FILE_RADIUS)
 
-        # ATOMS RADII
-        VAN_DER_WAALS_RADII = get_radii(FILE_RADIUS)
+    # TOTAL ASA
+    # --- READ
+    # Reading Total ASA
+    print("Reading Total ASA...")
+    # filename_data = "./Data/standard.data"
+    # max_asa = read_max_asa(filename=filename_data)
+    print("Reading Total ASA file - Done.")
 
-        # TOTAL ASA
-        # --- READ
-        # Reading Total ASA
-        print("Reading Total ASA...")
-        # filename_data = "./Data/standard.data"
-        # max_asa = read_max_asa(filename=filename_data)
-        print("Reading Total ASA file - Done.")
+    # --- CALCULATING
+    # Calculating Total ASA
+    print("Calculating Total ASA...")
+    PROBE_RADIUS = 1.4
+    max_asa = get_reference_total_asa(filename=FILE_RADIUS, probe_radius=PROBE_RADIUS)
+    print("Calculating Total ASA - Done.")
+    print(max_asa)
 
-        # --- CALCULATING
-        # Calculating Total ASA
-        print("Calculating Total ASA...")
-        PROBE_RADIUS = 1.4
-        max_asa = get_reference_total_asa(filename=FILE_RADIUS, probe_radius=PROBE_RADIUS)
-        # for residue in max_asa:
-        #     for index in max_asa[residue]:
-        #         max_asa[residue][index] = round(max_asa[residue][index], 3)
-        print("Calculating Total ASA - Done.")
-
-        print(max_asa)
-
-    else:
-        print(f"This file does not exist. Default values:\n{VAN_DER_WAALS_RADII}.")
-
-    # time.sleep(2)
+    time.sleep(2)
     # -------------------------------------------
     # READ PDB FILE
     print("Reading PDB file...")
     atoms = get_atoms(FILE_PDB)
     # print(atoms)
     print("Reading PDB file - Done.")
-    atom_1, atom = atoms[0], atoms[1]
+    # atom_1, atom = atoms[0], atoms[1]
     # print(atom)
+    time.sleep(2)
 
-    # time.sleep(2)
     # -------------------------------------------
     # CALCULATE ASA
     # -- GENERAL TEST
     NUMBER_OF_POINTS = 92
-    print("Calculating ASA...")
+    print("Calculating Atomic ASA...")
     for atom_i in atoms:
         # GENEREATE SPHERE
         # print("Generating Sphere points...")
         atom_i.points = saff_kuijlaars_points(NUMBER_OF_POINTS, atom_i.position, atom_i.radius)
         # print("Generating Sphere points - DONE")
+        # time.sleep(2)
 
         atom_i.asa = calculate_asa(current_atom=atom_i, atoms_list=atoms)
         # print(atom_i)
-    print("Calculating ASA - Done")
+    print("Calculating Atomic ASA - Done.")
+    time.sleep(2)
 
     # Calculating Residue ASA
     print("Calculating Residue ASA...")
     residues_asa = calculate_residue_asa(atoms)
     print("Calculating Residue ASA - Done.")
-    for residue in residues_asa:
-        for index in residues_asa[residue]:
-            residues_asa[residue][index] = round(residues_asa[residue][index], 3)
     print(residues_asa)
-
+    time.sleep(2)
     # -------------------------------------------
 #     # CALCULATE RSA
 #     rsa_data = []

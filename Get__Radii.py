@@ -84,12 +84,12 @@ def set_dict_atoms(filename:str):
 
                 # Atoms
                 elif integrate_line.startswith("ATOM"):
-                    print(integrate_line.strip().split())
+                    # print(integrate_line.strip().split())
                     if is_heteroatom and integrate_line.strip().split()[1] == "N":
                         atom_i = "".join(integrate_line.strip().split()[1:3])
                         radius = float(integrate_line.strip().split()[3])
                         polarity = int(integrate_line.strip().split()[4])
-                        print(atom_i, radius, polarity)
+                        # print(atom_i, radius, polarity)
                     else:
                         atom_i = integrate_line.strip().split()[1]
                         radius = float(integrate_line.strip().split()[2])
@@ -138,6 +138,9 @@ def get_reference_total_asa(filename:str, probe_radius:float=1.4):
                         else:
                             max_asa[residue_name] = 4 * math.pi * radius**2
                             # print(f"New space:{max_asa[residue_name]}")
+            # Rounding the ASA to 3 decimals
+        for residue in max_asa:
+            max_asa[residue] = round(max_asa[residue], 3)
     else:
         print(f"This file does not exist. Returns default values.")
         # Max ASA values (Tien et al. 2013)
@@ -251,4 +254,4 @@ if __name__ == "__main__":
         print(f"{res:<10} {total:>15.2f} {polar:>15.2f} {nonpolar:>20.2f}")
 
     dict_atoms = set_dict_atoms(FILENAME)
-    print(dict_atoms)
+    # print(dict_atoms)
