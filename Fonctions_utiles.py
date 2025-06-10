@@ -8,7 +8,7 @@ import math
 import numpy as np
 
 from Atom import Atom
-from Get__Radii import get_radii
+from Get__Radii import get_radii, get_reference_total_asa
 
 
 # Defaults Radii
@@ -149,11 +149,11 @@ def read_max_asa(filename:str):
     """Returns max ASA for each residue."""
     # Max ASA values (Tien et al. 2013)
     max_asa = {
-        'A': 121.0, 'R': 265.0, 'N': 187.0, 'D': 187.0,
-        'C': 148.0, 'Q': 214.0, 'E': 214.0, 'G': 97.0,
-        'H': 216.0, 'I': 195.0, 'L': 191.0, 'K': 230.0,
-        'M': 203.0, 'F': 228.0, 'P': 154.0, 'S': 143.0,
-        'T': 163.0, 'W': 264.0, 'Y': 255.0, 'V': 165.0
+        'ALA': 121.0, 'ARG': 265.0, 'ASN': 187.0, 'ASP': 187.0,
+        'CYS': 148.0, 'GLN': 214.0, 'GLU': 214.0, 'GLY': 97.0,
+        'HIS': 216.0, 'ILE': 195.0, 'LEU': 191.0, 'LYS': 230.0,
+        'MET': 203.0, 'PHE': 228.0, 'PRO': 154.0, 'SER': 143.0,
+        'THR': 163.0, 'TRP': 264.0, 'TYR': 255.0, 'VAL': 165.0
     }
     IS_EXIST = os.path.exists(filename)
     if IS_EXIST:
@@ -258,7 +258,7 @@ if __name__ == "__main__":
         sys.exit()
 
     # -------------------------------------------
-    # CREATE RADII REFERENCE
+    # CREATE RADII REFERENCES
     FILE_RADIUS = "./Data/vdw.radii"
 
     IS_EXIST = os.path.exists(FILE_RADIUS)
@@ -266,7 +266,30 @@ if __name__ == "__main__":
         # print('MAIN EXECUTION')
         # print(f"Radii references: '{FILE_RADIUS}' found...")
         time.sleep(1)
+
+        # ATOMS RADII
         VAN_DER_WAALS_RADII = get_radii(FILE_RADIUS)
+
+        # TOTAL ASA
+        # --- READ
+        # Reading Total ASA
+        print("Reading Total ASA...")
+        # filename_data = "./Data/standard.data"
+        # max_asa = read_max_asa(filename=filename_data)
+        print("Reading Total ASA file - Done.")
+
+        # --- CALCULATING
+        # Calculating Total ASA
+        print("Calculating Total ASA...")
+        PROBE_RADIUS = 1.4
+        max_asa = get_reference_total_asa(filename=FILE_RADIUS, probe_radius=PROBE_RADIUS)
+        # for residue in max_asa:
+        #     for index in max_asa[residue]:
+        #         max_asa[residue][index] = round(max_asa[residue][index], 3)
+        print("Calculating Total ASA - Done.")
+
+        print(max_asa)
+
     else:
         print(f"This file does not exist. Default values:\n{VAN_DER_WAALS_RADII}.")
 
@@ -300,21 +323,11 @@ if __name__ == "__main__":
     print("Calculating Residue ASA...")
     residues_asa = calculate_residue_asa(atoms)
     print("Calculating Residue ASA - Done.")
+    for residue in residues_asa:
+        for index in residues_asa[residue]:
+            residues_asa[residue][index] = round(residues_asa[residue][index], 3)
     print(residues_asa)
 
-    # Reading Total ASA
-    print("Reading Total ASA...")
-    # filename_data = "./Data/standard.data"
-    # max_asa = read_max_asa(filename=filename_data)
-    print("Reading Total ASA file - Done.")
-
-    # Calculating Total ASA
-    print("Calculating Total ASA...")
-    PROBE_RADIUS = 1.4
-    max_asa = calculate_max_asa(list_atoms=atoms, probe_radius=PROBE_RADIUS)
-    print("Calculating Total ASA - Done.")
-
-    print(max_asa)
     # -------------------------------------------
 #     # CALCULATE RSA
 #     rsa_data = []
