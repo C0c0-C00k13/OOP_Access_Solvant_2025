@@ -29,7 +29,7 @@ def read_pdb(filename_pdb):
 
 
 # ======================
-# CALCULATE SPHERE
+# CALCULATE SPHERE + LIST OF POINTS
 # ======================
 
 def saff_kuijlaars_points(n, id_atom, center=(0.0,0.0,0.0), radius=0.0):
@@ -62,9 +62,11 @@ def saff_kuijlaars_points(n, id_atom, center=(0.0,0.0,0.0), radius=0.0):
         y = round((center[1] + math.sin(theta) * math.sin(phi) * radius), 3)
         z = round((center[2] + math.cos(theta) * radius), 3)
 
-        points.append(id_atom, (x, y, z))
+        points.append( (id_atom, (x, y, z)) )
 
     return points
+
+# def geneate_list_points():
 
 # ======================
 # MAIN
@@ -75,5 +77,10 @@ def saff_kuijlaars_points(n, id_atom, center=(0.0,0.0,0.0), radius=0.0):
 # ======================
 
 file_atoms = read_pdb(FILENAME_PROTEIN)
+# [print(atom) for atom in file_atoms]
+# [print(file_atoms[atom]) for atom in file_atoms]
+# [print(file_atoms[atom]['coordinates']) for atom in file_atoms]
+list_points = [saff_kuijlaars_points(n=92,id_atom=atom, center=file_atoms[atom]['coordinates']) for atom in file_atoms]
 
-# print()
+for point in list_points:
+    print(point)
