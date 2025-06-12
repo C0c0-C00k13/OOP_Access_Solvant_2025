@@ -89,6 +89,9 @@ def saff_kuijlaars_points(n, center=(0.0,0.0,0.0), radius=0.0):
         x = center[0] + math.sin(theta) * math.cos(phi) * radius
         y = center[1] + math.sin(theta) * math.sin(phi) * radius
         z = center[2] + math.cos(theta) * radius
+        # x = round((center[0] + math.sin(theta) * math.cos(phi) * radius), 3)
+        # y = round((center[1] + math.sin(theta) * math.sin(phi) * radius), 3)
+        # z = round((center[2] + math.cos(theta) * radius), 3)
 
         points[k - 1] = np.array([x, y, z])
 
@@ -107,7 +110,20 @@ def distance(point_a, point_b)->float:
     ---
     distance (float) : Distance from 2 points (a, b).
     """
-    return math.sqrt(sum((point_a[i]-point_b[i])**2 for i in range(3)))
+    # return math.sqrt(sum((point_a[i]-point_b[i])**2 for i in range(3)))
+    return round(math.sqrt(sum((point_a[i]-point_b[i])**2 for i in range(3))), 5)
+
+
+def comparison_distance(central_atom, test_atom,central_point, probe_radius = 1.4):
+    threshold_radius = central_atom.radius + probe_radius
+    occluded =  False
+    for pos_points in test_atom.points:
+        distance_pt_at = distance(pos_points, central_atom.position)
+        distance_pt_pt = distance(pos_points, central_point)
+        if distance_pt_at < threshold_radius and distance_pt_pt < probe_radius:
+            occluded = True
+            break
+    return occluded
 
 
 def calculate_asa(current_atom, atoms_list, probe_radius=1.4)->float:
@@ -137,9 +153,10 @@ def calculate_asa(current_atom, atoms_list, probe_radius=1.4)->float:
             if current_atom.index != atom_i.index:
                 if distance(point, atom_i.position) < threshold_radius:
                     exposed = False
-                    break
+                    # break
                 if exposed:
                     accessible_points += 1
+    print(current_atom,accessible_points)
     # Surface area of full sphere * exposed fraction
     sphere_area = 4 * math.pi * threshold_radius**2
     return sphere_area * (accessible_points / len(current_atom.points))
@@ -227,21 +244,6 @@ asa_data = [
     (5, 'L', 100.0)
 ]
 
-# Calculate RSA
-# rsa_data = []
-# for res_id, aa, asa in asa_data:
-#     max_val = max_asa.get(aa)
-#     if max_val:
-#         rsa = asa / max_val
-#         rsa_data.append((res_id, aa, asa, round(rsa, 3)))
-#     else:
-#         rsa_data.append((res_id, aa, asa, None))
-
-# --- EXECUTION
-# Print results
-# for res_id, aa, asa, rsa in rsa_data:
-#     print(f"Residue {res_id} ({aa}): ASA = {asa:.2f}, RSA = {rsa if rsa is not None else 'N/A'}")
-
 # ------------------------------------
 # ---------------------------------------------------------------------------------
 
@@ -265,7 +267,6 @@ if __name__ == "__main__":
     # -------------------------------------------
     # CREATE RADII REFERENCES
     FILE_RADIUS = "./Data/vdw.radii"
-
     VAN_DER_WAALS_RADII = get_radii(FILE_RADIUS)
 
     # TOTAL ASA
@@ -282,9 +283,9 @@ if __name__ == "__main__":
     PROBE_RADIUS = 1.4
     max_asa = get_reference_total_asa(filename=FILE_RADIUS, probe_radius=PROBE_RADIUS)
     print("Calculating Total ASA - Done.")
-    print(max_asa)
+    # print(max_asa)
 
-    time.sleep(2)
+    # time.sleep(2)
     # -------------------------------------------
     # READ PDB FILE
     print("Reading PDB file...")
@@ -293,7 +294,7 @@ if __name__ == "__main__":
     print("Reading PDB file - Done.")
     # atom_1, atom = atoms[0], atoms[1]
     # print(atom)
-    time.sleep(2)
+    # time.sleep(2)
 
     # -------------------------------------------
     # CALCULATE ASA
@@ -307,16 +308,81 @@ if __name__ == "__main__":
         # print("Generating Sphere points - DONE")
         # time.sleep(2)
 
-        atom_i.asa = calculate_asa(current_atom=atom_i, atoms_list=atoms)
+        # atom_i.asa = calculate_asa(current_atom=atom_i, atoms_list=atoms[:10])
         # print(atom_i)
-    print("Calculating Atomic ASA - Done.")
-    time.sleep(2)
+        # Radius of current atom
 
-    # Calculating Residue ASA
-    print("Calculating Residue ASA...")
-    residues_asa = calculate_residue_asa(atoms)
-    print("Calculating Residue ASA - Done.")
-    print(residues_asa)
+    # ----------- TO REWRITE
+    # List of atoms
+    for central_atom in atoms[:8]:
+        print(f"atom : {central_atom.element} , n°{central_atom.index}")
+        # time.sleep(1)
+        # Number of accessible points per atom
+        accessible_points = 0
+        # print(central_atom.points)
+
+        # Runs through the list of points of Central atom
+        for current_point in central_atom.points:
+            # ---- TAG
+            # print(f"current_point: {current_point}")
+            # time.sleep(2)
+            # --
+            # Point defined as exposed by default
+            exposed = True
+
+            # Filter out the atom
+            filtered_atoms = [atom for atom in atoms if atom != central_atom]
+            # Runs through the list of atoms -- excluding the Central one
+            for test_atom in filtered_atoms:
+                # ---- TAG
+                # print(f"Atom: {test_atom.index}")
+                # time.sleep(1)
+                # --
+
+                # Compare distance of every points of Test atom to threshold
+                if comparison_distance(central_atom, test_atom, current_point):
+                    exposed = False
+                    # print(distance(pos_points, test_atom.position))
+                    # print(f"Current atom {central_atom.index}, point :{current_point}, occluded by :{test_atom.index}, point: {idx_point}")
+                    # time.sleep(2)
+                    # --
+                    break
+            if exposed:
+                accessible_points += 1
+            
+        print(central_atom.element,central_atom.index,central_atom.residue,accessible_points)
+        # Surface area of full sphere * exposed fraction
+        sphere_area = 4 * math.pi * (central_atom.radius + PROBE_RADIUS)**2
+        print (sphere_area * (accessible_points / len(central_atom.points)))
+    print("Calculating Atomic ASA - Done.")
+    # time.sleep(2)
+
+    # # Calculating Residue ASA
+    # print("Calculating Residue ASA...")
+    # # residues_asa = calculate_residue_asa(atoms[:10])
+    # residues_asa = {}
+    # # Run through atom list
+    # for atom_i in atoms[:5]:
+    #     print(atom_i, )
+        # # Searches for the current residue
+        # if atom_i.residue in residues_asa:
+        #     # Searches for the current residue index
+        #     if atom_i.id_res not in residues_asa[atom_i.residue]:
+        #         # Creates a new emplacement for the residue index
+        #         residues_asa[atom_i.residue].update({atom_i.id_res : 0})
+        # # Creates a new emplacement for the residue name
+        # else:
+        #     print(f"New residue: {atom_i.residue}|Current ASA: {residues_asa}")
+        #     residues_asa[atom_i.residue] = {atom_i.id_res : 0}
+        # residues_asa[atom_i.residue][atom_i.id_res] += atom_i.asa
+        # print(f"Current loop: {atom_i.index}:{atom_i.element}:{atom_i.residue}|Current ASA: {residues_asa}")
+
+    # Rounding the ASA to 3 decimals
+    # for residue in residues_asa:
+    #     for index in residues_asa[residue]:
+    #         residues_asa[residue][index] = round(residues_asa[residue][index], 3)
+    # print("Calculating Residue ASA - Done.")
+    # print(residues_asa)
     time.sleep(2)
     # -------------------------------------------
 #     # CALCULATE RSA
