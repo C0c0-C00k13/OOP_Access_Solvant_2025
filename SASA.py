@@ -161,6 +161,38 @@ def calculate_asa_polar(atoms, probe=PROBE_RADIUS):
     return res_asa, chain_stats
 
 
+def calculate_asa_residue(atoms, probe=PROBE_RADIUS):
+    sphere = generate_sphere_points(POINTS_PER_SPHERE)
+    point_area = 4 * math.pi / POINTS_PER_SPHERE
+    res_asa = {}
+
+    for atom in atoms:
+        x, y, z = atom["x"], atom["y"], atom["z"]
+        element = atom["element"]
+        r = VDW_RADII.get(element, 1.7) + probe
+
+        exposed_points = 0
+        for dx, dy, dz in sphere:
+            px = x + r * dx
+            py = y + r * dy
+            pz = z + r * dz
+            if is_point_exposed(px, py, pz, atoms, atom, probe):
+                exposed_points += 1
+
+        atom_asa = exposed_points * point_area * (r ** 2)
+        key = (atom["chain"], atom["res_id"], atom["res"])
+        if key not in res_asa:
+            res_asa[key] = {"total": 0.0, "polar": 0.0, "apolar": 0.0}
+        
+        res_asa[key]["total"] += atom_asa
+        if element in {"N", "O", "S"}:
+            res_asa[key]["polar"] += atom_asa
+        else:
+            res_asa[key]["apolar"] += atom_asa
+
+    return res_asa
+    
+
 # ===========================
 # MAIN
 # ===========================
@@ -169,22 +201,31 @@ def main():
     # pdb_file = input("Enter PDB file: ")
     pdb_file = "./Data/2c8r.pdb"
     atoms = read_pdb(pdb_file)
-    res_asa = calculate_asa(atoms)
-
+    
+    # Residues
+    res_asa = calculate_asa_residue(atoms)
     print("\nResidue ASA and RSA:")
-    print(f"{'Chain':<5} {'ResID':<6} {'ResName':<7} {'ASA (Å²)':<10} {'RSA (%)':<10}")
-    for (chain, res_id, res_name), asa in sorted(res_asa.items()):
+    print(f"{'Chain':<5} {'ResID':<6} {'ResName':<7} "
+          f"{'TotalASA':<10} {'RSA(%)':<8} "
+          f"{'PolarASA':<10} {'PolarRSA':<10} "
+          f"{'ApolarASA':<11} {'ApolarRSA':<10}")
+
+    for (chain, res_id, res_name), data in sorted(res_asa.items()):
         max_ref = MAX_ASA.get(res_name, 200)
-        rsa = (asa / max_ref) * 100
-        print(f"{chain:<5} {res_id:<6} {res_name:<7} {asa:<10.2f} {rsa:<10.2f}")
+        total = data["total"]
+        polar = data["polar"]
+        apolar = data["apolar"]
+
+        rsa_total = (total / max_ref) * 100
+        rsa_polar = (polar / max_ref) * 100
+        rsa_apolar = (apolar / max_ref) * 100
+
+        print(f"{chain:<5} {res_id:<6} {res_name:<7} "
+              f"{total:<10.2f} {rsa_total:<8.2f} "
+              f"{polar:<10.2f} {rsa_polar:<10.2f} "
+              f"{apolar:<11.2f} {rsa_apolar:<10.2f}")
+
     res_asa, chain_stats = calculate_asa_polar(atoms)
-
-    print("\nResidue ASA and RSA:")
-    print(f"{'Chain':<5} {'ResID':<6} {'ResName':<7} {'ASA (Å²)':<10} {'RSA (%)':<10}")
-    for (chain, res_id, res_name), asa in sorted(res_asa.items()):
-        max_ref = MAX_ASA.get(res_name, 200)
-        rsa = (asa / max_ref) * 100
-        print(f"{chain:<5} {res_id:<6} {res_name:<7} {asa:<10.2f} {rsa:<10.2f}")
 
     print("\nPer-Chain ASA Summary:")
     print(f"{'Chain':<5} {'Main ASA':<12} {'Side ASA':<12} {'Polar ASA':<12} {'Apolar ASA':<12} {'Total ASA':<12}")
