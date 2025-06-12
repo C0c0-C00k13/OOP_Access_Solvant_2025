@@ -1,4 +1,5 @@
 import math
+import time
 
 FILENAME_RADIUS = "./Data/vdw.radii"
 FILENAME_PROTEIN = "./Data/2c8r.pdb"
@@ -27,12 +28,13 @@ def read_pdb(filename_pdb):
                 }
     return list_atoms
 
+# Read Radius file
 
 # ======================
 # CALCULATE SPHERE + LIST OF POINTS
 # ======================
 
-def saff_kuijlaars_points(n, id_atom, center=(0.0,0.0,0.0), radius=0.0):
+def saff_kuijlaars_points(n, id_atom, center=(0.0,0.0,0.0), radius=1.0):
     """
     Generates a n-points quasi-uniform sphere based on Saff and Kuijlaars algorithm.
 
@@ -76,11 +78,26 @@ def saff_kuijlaars_points(n, id_atom, center=(0.0,0.0,0.0), radius=0.0):
 # MAIN
 # ======================
 
-file_atoms = read_pdb(FILENAME_PROTEIN)
-# [print(atom) for atom in file_atoms]
-# [print(file_atoms[atom]) for atom in file_atoms]
-# [print(file_atoms[atom]['coordinates']) for atom in file_atoms]
-list_points = [saff_kuijlaars_points(n=92,id_atom=atom, center=file_atoms[atom]['coordinates']) for atom in file_atoms]
+extracted_atoms = read_pdb(FILENAME_PROTEIN)
+# [print(atom) for atom in extracted_atoms]
+# [print(extracted_atoms[atom]) for atom in extracted_atoms]
+# [print(extracted_atoms[atom]['coordinates']) for atom in extracted_atoms]
+list_points = []
 
-for point in list_points:
-    print(point)
+# [print(key) for key in extracted_atoms.keys()]
+# [print(item[0],item[1]['coordinates']) for item in extracted_atoms.items()]
+# [print(value['coordinates']) for value in extracted_atoms.values()]
+
+for item in extracted_atoms.items():
+    list_points += saff_kuijlaars_points(n=92, id_atom=item[0], center=item[1]['coordinates'])
+print(list_points)
+# # lis_idx = [point[0] for point in list_points] 
+# # [print(n) for n in range(395) if n not in lis_idx]
+# [print(point) for point in list_points if point[0] == 166]
+
+# print(len(list_points), 92*393)
+# list_occluded = []
+# for central_point in list_points:
+#     other_points = [point for point in list_points if point != central_point]
+#     print(other_points,len(other_points), central_point)
+#     time.sleep(2)
