@@ -1,4 +1,5 @@
 import math
+from collections import defaultdict
 
 # ===========================
 # CONFIGURATION
@@ -16,6 +17,9 @@ MAX_ASA = {
     "LEU": 180, "LYS": 211, "MET": 204, "PHE": 218, "PRO": 143,
     "SER": 122, "THR": 146, "TRP": 259, "TYR": 229, "VAL": 160
 }
+
+MAIN_CHAIN_ATOMS = {"N", "CA", "C", "O", "OXT", "H", "HA"}
+POLAR_ELEMENTS = {"N", "O", "S"}
 
 # ===========================
 # STEP 1: READ PDB FILE
@@ -106,6 +110,57 @@ def calculate_asa(atoms, probe=PROBE_RADIUS):
 
     return res_asa
 
+
+# ===========================
+# POLAR CHAIN
+# ===========================
+
+def calculate_asa_polar(atoms, probe=PROBE_RADIUS):
+    sphere = generate_sphere_points(POINTS_PER_SPHERE)
+    point_area = 4 * math.pi / POINTS_PER_SPHERE
+    res_asa = defaultdict(float)
+    chain_stats = defaultdict(lambda: {
+        "main": 0.0, "side": 0.0,
+        "polar": 0.0, "apolar": 0.0,
+        "total": 0.0
+    })
+
+    for atom in atoms:
+        x, y, z = atom["x"], atom["y"], atom["z"]
+        element = atom["element"]
+        atom_name = atom["atom"]
+        res = atom["res"]
+        chain = atom["chain"]
+        res_id = atom["res_id"]
+        key = (chain, res_id, res)
+
+        r = VDW_RADII.get(element, 1.7) + probe
+        exposed_points = 0
+
+        for dx, dy, dz in sphere:
+            px = x + r * dx
+            py = y + r * dy
+            pz = z + r * dz
+            if is_point_exposed(px, py, pz, atoms, atom, probe):
+                exposed_points += 1
+
+        atom_asa = exposed_points * point_area * (r ** 2)
+        res_asa[key] += atom_asa
+        chain_stats[chain]["total"] += atom_asa
+
+        if atom_name in MAIN_CHAIN_ATOMS:
+            chain_stats[chain]["main"] += atom_asa
+        else:
+            chain_stats[chain]["side"] += atom_asa
+
+        if element in POLAR_ELEMENTS:
+            chain_stats[chain]["polar"] += atom_asa
+        else:
+            chain_stats[chain]["apolar"] += atom_asa
+
+    return res_asa, chain_stats
+
+
 # ===========================
 # MAIN
 # ===========================
@@ -122,5 +177,19 @@ def main():
         max_ref = MAX_ASA.get(res_name, 200)
         rsa = (asa / max_ref) * 100
         print(f"{chain:<5} {res_id:<6} {res_name:<7} {asa:<10.2f} {rsa:<10.2f}")
+    res_asa, chain_stats = calculate_asa_polar(atoms)
+
+    print("\nResidue ASA and RSA:")
+    print(f"{'Chain':<5} {'ResID':<6} {'ResName':<7} {'ASA (Å²)':<10} {'RSA (%)':<10}")
+    for (chain, res_id, res_name), asa in sorted(res_asa.items()):
+        max_ref = MAX_ASA.get(res_name, 200)
+        rsa = (asa / max_ref) * 100
+        print(f"{chain:<5} {res_id:<6} {res_name:<7} {asa:<10.2f} {rsa:<10.2f}")
+
+    print("\nPer-Chain ASA Summary:")
+    print(f"{'Chain':<5} {'Main ASA':<12} {'Side ASA':<12} {'Polar ASA':<12} {'Apolar ASA':<12} {'Total ASA':<12}")
+    for chain, stats in sorted(chain_stats.items()):
+        print(f"{chain:<5} {stats['main']:<12.2f} {stats['side']:<12.2f} "
+              f"{stats['polar']:<12.2f} {stats['apolar']:<12.2f} {stats['total']:<12.2f}")
 
 main()
