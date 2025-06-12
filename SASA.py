@@ -1,0 +1,126 @@
+import math
+
+# ===========================
+# CONFIGURATION
+# ===========================
+
+PROBE_RADIUS = 1.4  # Radius of water probe (O radius in Å)
+POINTS_PER_SPHERE = 92  # More points = higher accuracy, slower
+VDW_RADII = {
+    "H": 1.2, "C": 1.7, "N": 1.55, "O": 1.52, "S": 1.8,
+}
+# Max ASA values for residues (Å²), for RSA computation
+MAX_ASA = {
+    "ALA": 113, "ARG": 241, "ASN": 158, "ASP": 151, "CYS": 140,
+    "GLN": 189, "GLU": 183, "GLY": 85, "HIS": 194, "ILE": 182,
+    "LEU": 180, "LYS": 211, "MET": 204, "PHE": 218, "PRO": 143,
+    "SER": 122, "THR": 146, "TRP": 259, "TYR": 229, "VAL": 160
+}
+
+# ===========================
+# STEP 1: READ PDB FILE
+# ===========================
+
+def read_pdb(filename):
+    atoms = []
+    with open(filename, "r") as f:
+        for line in f:
+            if line.startswith("ATOM"):
+                atom_name = line[12:16].strip()
+                res_name = line[17:20].strip()
+                chain = line[21].strip()
+                res_id = int(line[22:26])
+                x = float(line[30:38])
+                y = float(line[38:46])
+                z = float(line[46:54])
+                element = atom_name[0]
+                atoms.append({
+                    "atom": atom_name,
+                    "res": res_name,
+                    "chain": chain,
+                    "res_id": res_id,
+                    "x": x, "y": y, "z": z,
+                    "element": element
+                })
+    return atoms
+
+# ===========================
+# STEP 2: SAFF & KUIJLAARS SPHERE
+# ===========================
+
+def generate_sphere_points(n):
+    points = []
+    offset = 2.0 / n
+    increment = math.pi * (3.0 - math.sqrt(5))
+    for k in range(n):
+        y = k * offset - 1 + (offset / 2)
+        r = math.sqrt(1 - y * y)
+        phi = k * increment
+        x = math.cos(phi) * r
+        z = math.sin(phi) * r
+        points.append((x, y, z))
+    return points
+
+# ===========================
+# STEP 3: ACCESSIBLE POINT TEST
+# ===========================
+
+def is_point_exposed(px, py, pz, atoms, this_atom, probe):
+    for atom in atoms:
+        if atom is this_atom:
+            continue
+        ex, ey, ez = atom["x"], atom["y"], atom["z"]
+        r = VDW_RADII.get(atom["element"], 1.7) + probe
+        dx, dy, dz = px - ex, py - ey, pz - ez
+        if dx*dx + dy*dy + dz*dz < r * r:
+            return False
+    return True
+
+# ===========================
+# STEP 4: CALCULATE ASA/RSA
+# ===========================
+
+def calculate_asa(atoms, probe=PROBE_RADIUS):
+    sphere = generate_sphere_points(POINTS_PER_SPHERE)
+    point_area = 4 * math.pi / POINTS_PER_SPHERE
+    res_asa = {}
+
+    for atom in atoms:
+        x, y, z = atom["x"], atom["y"], atom["z"]
+        element = atom["element"]
+        r = VDW_RADII.get(element, 1.7) + probe
+
+        exposed_points = 0
+        for dx, dy, dz in sphere:
+            px = x + r * dx
+            py = y + r * dy
+            pz = z + r * dz
+            if is_point_exposed(px, py, pz, atoms, atom, probe):
+                exposed_points += 1
+
+        atom_asa = exposed_points * point_area * (r ** 2)
+        key = (atom["chain"], atom["res_id"], atom["res"])
+        if key not in res_asa:
+            res_asa[key] = 0.0
+        res_asa[key] += atom_asa
+
+    return res_asa
+
+# ===========================
+# MAIN
+# ===========================
+
+def main():
+    # pdb_file = input("Enter PDB file: ")
+    pdb_file = "./Data/2c8r.pdb"
+    atoms = read_pdb(pdb_file)
+    res_asa = calculate_asa(atoms)
+
+    print("\nResidue ASA and RSA:")
+    print(f"{'Chain':<5} {'ResID':<6} {'ResName':<7} {'ASA (Å²)':<10} {'RSA (%)':<10}")
+    for (chain, res_id, res_name), asa in sorted(res_asa.items()):
+        max_ref = MAX_ASA.get(res_name, 200)
+        rsa = (asa / max_ref) * 100
+        print(f"{chain:<5} {res_id:<6} {res_name:<7} {asa:<10.2f} {rsa:<10.2f}")
+
+main()
