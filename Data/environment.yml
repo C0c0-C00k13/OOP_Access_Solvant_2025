@@ -8,4 +8,5 @@ dependencies:
     - biopython
     - matplotlib
     - pandas
+    - scipy
     - jupyterlab
