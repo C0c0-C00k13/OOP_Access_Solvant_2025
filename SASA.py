@@ -26,6 +26,16 @@ POLAR_ELEMENTS = {"N", "O", "S"}
 # ===========================
 
 def read_pdb(filename):
+    """Returns the atoms from the PDB file.
+    
+    Parameters
+    ---
+    filename (str) : Name (or Path) of the PDB file.
+
+    Returns
+    ---
+    atoms ([Dict]) : List of atoms. 
+    """
     atoms = []
     with open(filename, "r") as f:
         for line in f:
@@ -53,6 +63,17 @@ def read_pdb(filename):
 # ===========================
 
 def generate_sphere_points(n):
+    """
+    Generates a n-points quasi-uniform sphere based on Saff and Kuijlaars algorithm.
+
+    Parameters
+    ---
+    n (int) : Number of points to generate.
+
+    Returns
+    ---
+    points ([tuple]): A list with an atom in the pdb file and  x, y, z of a point.
+    """
     points = []
     offset = 2.0 / n
     increment = math.pi * (3.0 - math.sqrt(5))
@@ -70,6 +91,21 @@ def generate_sphere_points(n):
 # ===========================
 
 def is_point_exposed(px, py, pz, atoms, this_atom, probe):
+    """ Returns a False if there is an overlap between to point s of different atoms.
+    
+    Parameters
+    ---
+    px (float) : Point coordinate on the x-axis.
+    py (float) : Point coordinate on the y-axis.
+    pz (float) : Point coordinate on the z-axis.
+    atoms (List) : List of of atoms.
+    this_atom (Dict): Atom linked to the current point. This atom will ba skipped when comparing distances. 
+    probe (float) : Radius of probe.
+
+    Returns
+    ---
+    True/ False (boolean)    
+    """
     for atom in atoms:
         if atom is this_atom:
             continue
@@ -85,6 +121,17 @@ def is_point_exposed(px, py, pz, atoms, this_atom, probe):
 # ===========================
 
 def calculate_asa(atoms, probe=PROBE_RADIUS):
+    """ Returns the ASA (Accessible Solvant Area) of each residues.
+
+    Parameters
+    ---
+    atoms ([Dict]) : List of atoms to process to calculate ASA.
+    probe (float) : Radius of the probe. Default value is set to constant PROBE_RADIUS.
+
+    Returns
+    ---
+    res_asa (Dict) : List of ASA for every residue of the list.
+    """
     sphere = generate_sphere_points(POINTS_PER_SPHERE)
     point_area = 4 * math.pi / POINTS_PER_SPHERE
     res_asa = {}
@@ -111,11 +158,19 @@ def calculate_asa(atoms, probe=PROBE_RADIUS):
     return res_asa
 
 
-# ===========================
-# POLAR CHAIN
-# ===========================
-
 def calculate_asa_polar(atoms, probe=PROBE_RADIUS):
+    """ Returns the ASA (Accessible Solvant Area) of each residue and chain.
+
+    Parameters
+    ---
+    atoms ([Dict]) : List of atoms to process to calculate ASA.
+    probe (float) : Radius of the probe. Default value is set to constant PROBE_RADIUS.
+
+    Returns
+    ---
+    res_asa (Dict) : List of ASA for every residue of the list.
+    chain_stat (Dict) : List of ASA of each chain of the protein.
+    """
     sphere = generate_sphere_points(POINTS_PER_SPHERE)
     point_area = 4 * math.pi / POINTS_PER_SPHERE
     res_asa = defaultdict(float)
@@ -162,6 +217,17 @@ def calculate_asa_polar(atoms, probe=PROBE_RADIUS):
 
 
 def calculate_asa_residue(atoms, probe=PROBE_RADIUS):
+    """ Returns the ASA (Accessible Solvant Area) of each residues.
+
+    Parameters
+    ---
+    atoms ([Dict]) : List of atoms to process to calculate ASA.
+    probe (float) : Radius of the probe. Default value is set to constant PROBE_RADIUS.
+
+    Returns
+    ---
+    res_asa (Dict) : List of ASA for every residue of the list.
+    """
     sphere = generate_sphere_points(POINTS_PER_SPHERE)
     point_area = 4 * math.pi / POINTS_PER_SPHERE
     res_asa = {}
@@ -233,4 +299,5 @@ def main():
         print(f"{chain:<5} {stats['main']:<12.2f} {stats['side']:<12.2f} "
               f"{stats['polar']:<12.2f} {stats['apolar']:<12.2f} {stats['total']:<12.2f}")
 
-main()
+if __name__ == "__main__":
+    main()
