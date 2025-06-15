@@ -364,7 +364,7 @@ def write_output(filename, res_asa, chain_stats, max_asa=MAX_ASA):
 # ===========================
 
 def main():
-    today = datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+    today = datetime.datetime.now().strftime("%m-%d-%Y %H:%M:%S")
     print(today)
     args = parse_args()
 
@@ -382,7 +382,7 @@ def main():
     
     description_radii, polar_elements, max_axa = VDW_RADII, POLAR_ELEMENTS, MAX_ASA
     if custom_radii_file is not None:
-        if os.path.isfile(custom_radii_file):
+        if os.path.exists(custom_radii_file):
             description_radii, polar_elements, max_axa = set_description(custom_radii_file)
 
     atoms, hetatoms = read_pdb(filename=pdb_file, add_hetatm=include_hetatm)
@@ -391,39 +391,13 @@ def main():
     res_asa, chain_stats = calculate_asa(atoms=atoms,hetatoms=hetatoms, probe=probe_radius,
                                         polar_list=polar_elements, vdw_radii=description_radii,
                                         point_per_sphere=point_per_sphere, main_chain_elements=MAIN_CHAIN_ATOMS)
-    print("\nResidue ASA and RSA:")
-    print(f"{'Chain':<5} {'ResID':<6} {'ResName':<7} "
-          f"{'TotalASA':<10} {'RSA(%)':<8} "
-          f"{'PolarASA':<10} {'PolarRSA':<10} "
-          f"{'ApolarASA':<11} {'ApolarRSA':<10}")
 
-    for (chain, res_id, res_name), data in sorted(res_asa.items()):
-        max_ref = max_axa.get(res_name, 200)
-        total = data["total"]
-        polar = data["polar"]
-        apolar = data["apolar"]
-
-        rsa_total = (total / max_ref) * 100
-        rsa_polar = (polar / max_ref) * 100
-        rsa_apolar = (apolar / max_ref) * 100
-
-        print(f"{chain:<5} {res_id:<6} {res_name:<7} "
-              f"{total:<10.2f} {rsa_total:<8.2f} "
-              f"{polar:<10.2f} {rsa_polar:<10.2f} "
-              f"{apolar:<11.2f} {rsa_apolar:<10.2f}")
-
-    print("\nPer-Chain ASA Summary:")
-    print(f"{'Chain':<5} {'Main ASA':<12} {'Side ASA':<12} {'Polar ASA':<12} {'Apolar ASA':<12} {'Total ASA':<12}")
-    for chain, stats in sorted(chain_stats.items()):
-        print(f"{chain:<5} {stats['main']:<12.2f} {stats['side']:<12.2f} "
-              f"{stats['polar']:<12.2f} {stats['apolar']:<12.2f} {stats['total']:<12.2f}")
-
-    path_result_directory = f"./Results/{today.split()[0]}"
+    path_result_directory = f"./Results/{today.split()[0]}/{output}"
     nested_directory_path = Path(path_result_directory)
     nested_directory_path.mkdir(parents=True, exist_ok=True)
-    output_filename = f"{path_result_directory}/{output}/{output}.asa"
-    print(output_filename, nested_directory_path)
-    # write_output(filename=output_filename, res_asa=res_asa, chain_stats=chain_stats, max_asa=max_axa)
+    output_filename = f"{path_result_directory}/{output}.asa"
+    write_output(filename=output_filename, res_asa=res_asa, chain_stats=chain_stats, max_asa=max_axa)
+    print(f"The output file '{output}.asa' has been created in the directory: {nested_directory_path}")
 
 
 if __name__ == "__main__":
