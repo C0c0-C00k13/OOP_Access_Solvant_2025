@@ -1,12 +1,16 @@
 import math
+import os
+import argparse
 from collections import defaultdict
 
 # ===========================
 # CONFIGURATION
 # ===========================
 
+FILENAME_RADIUS = "./Data/vdw.radii"
 PROBE_RADIUS = 1.4  # Radius of water probe (O radius in Å)
 POINTS_PER_SPHERE = 92  # More points = higher accuracy, slower
+DEFAULT_INCLUDE_HETATM = False
 VDW_RADII = {
     "H": 1.2, "C": 1.7, "N": 1.55, "O": 1.52, "S": 1.8,
 }
@@ -20,6 +24,25 @@ MAX_ASA = {
 
 MAIN_CHAIN_ATOMS = {"N", "CA", "C", "O", "OXT", "H", "HA"}
 POLAR_ELEMENTS = {"N", "O", "S"}
+
+
+# ===========================
+# ARGUMENT PARSER
+# ===========================
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Compute ASA/RSA from PDB.")
+
+    parser.add_argument("pdb_file", type=str, help="PDB file to process")
+    parser.add_argument("-i", "--hetero", choices=["y", "n"], default="n",
+                        help="Include HETATM records (y/n), default: n")
+    parser.add_argument("-p", "--probe", type=float, default=PROBE_RADIUS,
+                        help="Probe radius (default: 1.4)")
+    parser.add_argument("-r", "--radii", type=str, default=None,
+                        help="Custom radii file (default: None)")
+
+    return parser.parse_args()
+
 
 # ===========================
 # STEP 1: READ PDB FILE
@@ -57,7 +80,63 @@ def read_pdb(filename):
                     "x": x, "y": y, "z": z,
                     "element": element
                 })
-    return atoms
+    return atoms#, heteroatoms
+
+
+def set_radii(filename):
+    """"""
+    atoms = {}
+    polar_atoms = set()
+    is_heteroatom = False
+    max_residue_asa = {}
+
+    with open(filename, 'r') as file:
+        for line in file:
+            if line.startswith("RESIDUE"):
+                type = line.strip().split()[1] 
+                if type == "ATOM" or type == "NUCL":
+                    residue_name = line.strip().split()[-2]
+                    max_residue_asa.update({residue_name:0})
+                is_heteroatom = line.strip().split()[1] == "HETATM"
+
+            elif line.startswith("ATOM"):
+                atom_name, radius, polarity = line_atom(line, is_heteroatom)
+                max_residue_asa[residue_name] += calculate_max_atom_surface(radius)
+                if polarity == 1:
+                    polar_atoms.add(atom_name)
+                if atom_name in atoms:
+                    continue
+                atoms.update({atom_name : radius})
+
+    return atoms, polar_atoms, max_residue_asa
+
+def line_atom(line, is_hetatm):
+    """
+    """
+    if is_hetatm and line.strip().split()[1] == "N":
+        atom_i = "_".join(line.strip().split()[1:3])
+    else:
+        atom_i = line.strip().split()[1]
+
+    radius = float(line.strip().split()[-2])
+    polarity = int(line.strip().split()[-1])
+    return atom_i, radius, polarity
+
+
+def calculate_max_atom_surface(radius)->float:
+    """
+    Returns the sphere surface area of an atom. 
+
+    Parameter
+    ---
+    radius (float) : Radius of an atom.
+
+    Returns
+    (float) : Surface area of the atom.
+    ---
+
+    """
+    return 4 * math.pi * radius**2
 
 # ===========================
 # STEP 2: SAFF & KUIJLAARS SPHERE
@@ -75,7 +154,7 @@ def generate_sphere_points(n):
     ---
     points ([tuple]): A list with an atom in the pdb file and  x, y, z of a point.
     """
-    
+
     points = []
     offset = 2.0 / n
     increment = math.pi * (3.0 - math.sqrt(5))
@@ -108,6 +187,7 @@ def is_point_exposed(px, py, pz, atoms, this_atom, probe):
     ---
     True/ False (boolean)    
     """
+
     for atom in atoms:
         if atom is this_atom:
             continue
@@ -192,10 +272,23 @@ def calculate_asa(atoms, probe=PROBE_RADIUS):
 # ===========================
 
 def main():
-    # pdb_file = input("Enter PDB file: ")
-    pdb_file = "./Data/2c8r.pdb"
+    args = parse_args()
+
+    pdb_file = args.pdb_file
+    include_hetatm = args.hetero == "y"
+    probe_radius = args.probe
+    custom_radii_file = args.radii
+
+    print(f"PDB file         : {pdb_file}")
+    print(f"Include HETATM   : {include_hetatm}")
+    print(f"Probe radius     : {probe_radius}")
+    print(f"Custom radii file: {custom_radii_file}")
     atoms = read_pdb(pdb_file)
     
+    # if args.radii is not None:
+    #     if os.path.isfile(args.radii):
+    #         VDW_RADII, POLAR_ELEMENTS, MAX_ASA = set_radii(args.radii)
+
     # Residues, Chain
     res_asa, chain_stats = calculate_asa(atoms)
     print("\nResidue ASA and RSA:")
@@ -226,4 +319,5 @@ def main():
               f"{stats['polar']:<12.2f} {stats['apolar']:<12.2f} {stats['total']:<12.2f}")
 
 if __name__ == "__main__":
+    
     main()
