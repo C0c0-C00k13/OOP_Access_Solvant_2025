@@ -1,16 +1,16 @@
 import math
 import os
 import argparse
+import datetime
 from collections import defaultdict
+from pathlib import Path
 
 # ===========================
 # CONFIGURATION
 # ===========================
 
-FILENAME_RADIUS = "./Data/vdw.radii"
 PROBE_RADIUS = 1.4  # Radius of water probe (O radius in Å)
 POINTS_PER_SPHERE = 92  # More points = higher accuracy, slower
-DEFAULT_INCLUDE_HETATM = False
 VDW_RADII = {
     "H": 1.2, "C": 1.7, "N": 1.55, "O": 1.52, "S": 1.8,
 }
@@ -43,8 +43,10 @@ def parse_args():
     parser.add_argument("pdb_file", type=str, help="PDB file to process")
     parser.add_argument("-i", "--hetero", choices=["y", "n"], default="n",
                         help="Include HETATM records (y/n), default: n")
-    parser.add_argument("-n", "--points", type=int, default=92,
-                        help="Number of points representing the sphere, default: 92")
+    parser.add_argument("-n", "--points", type=int, default=POINTS_PER_SPHERE,
+                        help=f"Number of points representing the sphere, default: {PROBE_RADIUS}")
+    parser.add_argument("-o", "--output", type=str, default="output",
+                        help="Name of the output file, default : output")
     parser.add_argument("-p", "--probe", type=float, default=PROBE_RADIUS,
                         help="Probe radius (default: 1.4)")
     parser.add_argument("-r", "--radii", type=str, default=None,
@@ -57,16 +59,18 @@ def parse_args():
 # STEP 1: READ PDB FILE
 # ===========================
 
-def read_pdb(filename, include_hetatm):
+def read_pdb(filename, add_hetatm):
     """Returns the atoms from the PDB file.
     
     Parameters
     ---
     filename (str) : Name (or Path) of the PDB file.
+    include_hetatm (bool) : Determines if the function returns heteroatoms.
 
     Returns
     ---
-    atoms ([Dict]) : List of atoms. 
+    atoms ([Dict]) : List of atoms.
+    heteroatoms ([Dict]) : List of atoms.
     """
 
     atoms = []
@@ -75,7 +79,7 @@ def read_pdb(filename, include_hetatm):
         for line in f:
             if line.startswith("ATOM"):
                 atoms.append(parse_pdb_line(line=line))
-            if include_hetatm:
+            if add_hetatm:
                 if line.startswith("HETATM"):
                     heteroatoms.append(parse_pdb_line(line=line))
     return atoms, heteroatoms
@@ -135,7 +139,7 @@ def set_description(filename):
                 is_heteroatom = line.strip().split()[1] == "HETATM"
 
             elif line.startswith("ATOM"):
-                atom_name, radius, polarity = line_atom(line, is_heteroatom)
+                atom_name, radius, polarity = parse_line_radii(line, is_heteroatom)
                 max_residue_asa[residue_name] += calculate_max_atom_surface(radius)
                 if polarity == 1:
                     polar_atoms.add(atom_name)
@@ -146,7 +150,7 @@ def set_description(filename):
     return atoms, polar_atoms, max_residue_asa
 
 
-def line_atom(line, is_hetatm):
+def parse_line_radii(line, is_hetatm):
     """Returns the description of an atom.
     
     Parameters
@@ -218,8 +222,9 @@ def generate_sphere_points(n):
 # STEP 3: ACCESSIBLE POINT TEST
 # ===========================
 
-def is_point_exposed(px, py, pz, atoms, this_atom, probe, hetatoms):
-    """ Returns a False if there is an overlap between to point s of different atoms.
+def is_point_exposed(px, py, pz, atoms, this_atom,
+                    probe=PROBE_RADIUS, vdw_radii=VDW_RADII):
+    """ Returns a False if there is an overlap between to points of different atoms.
     
     Parameters
     ---
@@ -227,19 +232,20 @@ def is_point_exposed(px, py, pz, atoms, this_atom, probe, hetatoms):
     py (float) : Point coordinate on the y-axis.
     pz (float) : Point coordinate on the z-axis.
     atoms (List) : List of of atoms.
-    this_atom (Dict): Atom linked to the current point. This atom will ba skipped when comparing distances. 
+    this_atom (Dict): Atom linked to the current point. This atom will be skipped when comparing distances. 
     probe (float) : Radius of probe.
+    vdw_radii (Dict) : Listt of radius of every atom.
 
     Returns
     ---
     True/ False (boolean)    
     """
-
+    
     for atom in atoms:
         if atom is this_atom:
             continue
         ex, ey, ez = atom["x"], atom["y"], atom["z"]
-        r = VDW_RADII.get(atom["element"], 1.7) + probe
+        r = vdw_radii.get(atom["element"], 1.7) + probe
         dx, dy, dz = px - ex, py - ey, pz - ez
         if dx*dx + dy*dy + dz*dz < r * r:
             return False
@@ -249,7 +255,9 @@ def is_point_exposed(px, py, pz, atoms, this_atom, probe, hetatoms):
 # STEP 4: CALCULATE ASA/RSA
 # ===========================
 
-def calculate_asa(atoms, hetatoms, probe=PROBE_RADIUS):
+def calculate_asa(atoms, hetatoms, probe=PROBE_RADIUS,
+                point_per_sphere=POINTS_PER_SPHERE, vdw_radii=VDW_RADII,
+                polar_list=POLAR_ELEMENTS, main_chain_elements=MAIN_CHAIN_ATOMS):
     """ Returns the ASA (Accessible Solvant Area) of each residue and chain.
 
     Parameters
@@ -263,8 +271,8 @@ def calculate_asa(atoms, hetatoms, probe=PROBE_RADIUS):
     chain_stat (Dict) : List of ASA of each chain of the protein.
     """
 
-    sphere = generate_sphere_points(POINTS_PER_SPHERE)
-    point_area = 4 * math.pi / POINTS_PER_SPHERE
+    sphere = generate_sphere_points(point_per_sphere)
+    point_area = 4 * math.pi / point_per_sphere
     res_asa = {}
     chain_stats = defaultdict(lambda: {
         "main": 0.0, "side": 0.0,
@@ -272,6 +280,7 @@ def calculate_asa(atoms, hetatoms, probe=PROBE_RADIUS):
         "total": 0.0
     })
 
+    total_atom = atoms + hetatoms
     for atom in atoms:
         x, y, z = atom["x"], atom["y"], atom["z"]
         element = atom["element"]
@@ -281,15 +290,15 @@ def calculate_asa(atoms, hetatoms, probe=PROBE_RADIUS):
         res_id = atom["res_id"]
         key = (chain, res_id, res)
 
-        r = VDW_RADII.get(element, 1.7) + probe
+        r = vdw_radii.get(element, 1.7) + probe
         exposed_points = 0
 
         for dx, dy, dz in sphere:
             px = x + r * dx
             py = y + r * dy
             pz = z + r * dz
-            if is_point_exposed(px=px, py=py, pz=pz,
-                                atoms=atoms, this_atom=atom, probe=probe, hetatoms=hetatoms):
+            if is_point_exposed(px=px, py=py, pz=pz,atoms=total_atom,
+                                this_atom=atom, probe=probe, vdw_radii=vdw_radii):
                 exposed_points += 1
 
         atom_asa = exposed_points * point_area * (r ** 2)
@@ -300,13 +309,13 @@ def calculate_asa(atoms, hetatoms, probe=PROBE_RADIUS):
         chain_stats[chain]["total"] += atom_asa
 
         # Discriminates MAIN chain an SIDE chain
-        if atom_name in MAIN_CHAIN_ATOMS:
+        if atom_name in main_chain_elements:
             chain_stats[chain]["main"] += atom_asa
         else:
             chain_stats[chain]["side"] += atom_asa
 
         # Discriminates POLAR elements ande NON-POLAR elements
-        if element in POLAR_ELEMENTS:
+        if element in polar_list:
             res_asa[key]["polar"] += atom_asa
             chain_stats[chain]["polar"] += atom_asa
         else:
@@ -315,31 +324,73 @@ def calculate_asa(atoms, hetatoms, probe=PROBE_RADIUS):
 
     return res_asa, chain_stats
 
+
+
+# ===========================
+# STEP 5: WRITE OUTPUT
+# ===========================
+
+def write_output(filename, res_asa, chain_stats, max_asa=MAX_ASA):
+    with open(filename, 'w') as f:
+        f.write("\nResidue ASA and RSA:\n")
+        f.write(f"{'Chain':<5} {'ResID':<6} {'ResName':<7} "
+                f"{'TotalASA':<10} {'RSA(%)':<8} "
+                f"{'PolarASA':<10} {'PolarRSA':<10} "
+                f"{'ApolarASA':<11} {'ApolarRSA':<10}\n")
+
+        for (chain, res_id, res_name), data in sorted(res_asa.items()):
+            max_ref = max_asa.get(res_name, 200)
+            total = data["total"]
+            polar = data["polar"]
+            apolar = data["apolar"]
+
+            rsa_total = (total / max_ref) * 100
+            rsa_polar = (polar / max_ref) * 100
+            rsa_apolar = (apolar / max_ref) * 100
+
+            f.write(f"{chain:<5} {res_id:<6} {res_name:<7} "
+                    f"{total:<10.2f} {rsa_total:<8.2f} "
+                    f"{polar:<10.2f} {rsa_polar:<10.2f} "
+                    f"{apolar:<11.2f} {rsa_apolar:<10.2f}\n")
+
+        f.write("\nPer-Chain ASA Summary:\n")
+        f.write(f"{'Chain':<5} {'Main ASA':<12} {'Side ASA':<12} {'Polar ASA':<12} {'Apolar ASA':<12} {'Total ASA':<12}\n")
+        for chain, stats in sorted(chain_stats.items()):
+            f.write(f"{chain:<5} {stats['main']:<12.2f} {stats['side']:<12.2f} "
+                    f"{stats['polar']:<12.2f} {stats['apolar']:<12.2f} {stats['total']:<12.2f}\n")
+
 # ===========================
 # MAIN
 # ===========================
 
 def main():
+    today = datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+    print(today)
     args = parse_args()
 
     pdb_file = args.pdb_file
     include_hetatm = args.hetero == "y"
+    point_per_sphere = args.points
     probe_radius = args.probe
     custom_radii_file = args.radii
+    output = args.output
 
     print(f"PDB file         : {pdb_file}")
     print(f"Include HETATM   : {include_hetatm}")
     print(f"Probe radius     : {probe_radius}")
     print(f"Custom radii file: {custom_radii_file}")
     
-    # if custom_radii_file is not None:
-    #     if os.path.isfile(custom_radii_file):
-    #         VDW_RADII, POLAR_ELEMENTS, MAX_ASA = set_description(custom_radii_file)
+    description_radii, polar_elements, max_axa = VDW_RADII, POLAR_ELEMENTS, MAX_ASA
+    if custom_radii_file is not None:
+        if os.path.isfile(custom_radii_file):
+            description_radii, polar_elements, max_axa = set_description(custom_radii_file)
 
-    atoms, hetatoms = read_pdb(filename=pdb_file, include_hetatm=include_hetatm)
+    atoms, hetatoms = read_pdb(filename=pdb_file, add_hetatm=include_hetatm)
     
     # Residues, Chain
-    res_asa, chain_stats = calculate_asa(atoms=atoms,hetatoms=hetatoms, probe=PROBE_RADIUS)
+    res_asa, chain_stats = calculate_asa(atoms=atoms,hetatoms=hetatoms, probe=probe_radius,
+                                        polar_list=polar_elements, vdw_radii=description_radii,
+                                        point_per_sphere=point_per_sphere, main_chain_elements=MAIN_CHAIN_ATOMS)
     print("\nResidue ASA and RSA:")
     print(f"{'Chain':<5} {'ResID':<6} {'ResName':<7} "
           f"{'TotalASA':<10} {'RSA(%)':<8} "
@@ -347,7 +398,7 @@ def main():
           f"{'ApolarASA':<11} {'ApolarRSA':<10}")
 
     for (chain, res_id, res_name), data in sorted(res_asa.items()):
-        max_ref = MAX_ASA.get(res_name, 200)
+        max_ref = max_axa.get(res_name, 200)
         total = data["total"]
         polar = data["polar"]
         apolar = data["apolar"]
@@ -367,6 +418,14 @@ def main():
         print(f"{chain:<5} {stats['main']:<12.2f} {stats['side']:<12.2f} "
               f"{stats['polar']:<12.2f} {stats['apolar']:<12.2f} {stats['total']:<12.2f}")
 
+    path_result_directory = f"./Results/{today.split()[0]}"
+    nested_directory_path = Path(path_result_directory)
+    nested_directory_path.mkdir(parents=True, exist_ok=True)
+    output_filename = f"{path_result_directory}/{output}/{output}.asa"
+    print(output_filename, nested_directory_path)
+    # write_output(filename=output_filename, res_asa=res_asa, chain_stats=chain_stats, max_asa=max_axa)
+
+
 if __name__ == "__main__":
-    
+
     main()
