@@ -36,6 +36,7 @@ def read_pdb(filename):
     ---
     atoms ([Dict]) : List of atoms. 
     """
+
     atoms = []
     with open(filename, "r") as f:
         for line in f:
@@ -74,6 +75,7 @@ def generate_sphere_points(n):
     ---
     points ([tuple]): A list with an atom in the pdb file and  x, y, z of a point.
     """
+    
     points = []
     offset = 2.0 / n
     increment = math.pi * (3.0 - math.sqrt(5))
@@ -121,44 +123,6 @@ def is_point_exposed(px, py, pz, atoms, this_atom, probe):
 # ===========================
 
 def calculate_asa(atoms, probe=PROBE_RADIUS):
-    """ Returns the ASA (Accessible Solvant Area) of each residues.
-
-    Parameters
-    ---
-    atoms ([Dict]) : List of atoms to process to calculate ASA.
-    probe (float) : Radius of the probe. Default value is set to constant PROBE_RADIUS.
-
-    Returns
-    ---
-    res_asa (Dict) : List of ASA for every residue of the list.
-    """
-    sphere = generate_sphere_points(POINTS_PER_SPHERE)
-    point_area = 4 * math.pi / POINTS_PER_SPHERE
-    res_asa = {}
-
-    for atom in atoms:
-        x, y, z = atom["x"], atom["y"], atom["z"]
-        element = atom["element"]
-        r = VDW_RADII.get(element, 1.7) + probe
-
-        exposed_points = 0
-        for dx, dy, dz in sphere:
-            px = x + r * dx
-            py = y + r * dy
-            pz = z + r * dz
-            if is_point_exposed(px, py, pz, atoms, atom, probe):
-                exposed_points += 1
-
-        atom_asa = exposed_points * point_area * (r ** 2)
-        key = (atom["chain"], atom["res_id"], atom["res"])
-        if key not in res_asa:
-            res_asa[key] = 0.0
-        res_asa[key] += atom_asa
-
-    return res_asa
-
-
-def calculate_asa_polar(atoms, probe=PROBE_RADIUS):
     """ Returns the ASA (Accessible Solvant Area) of each residue and chain.
 
     Parameters
@@ -171,9 +135,10 @@ def calculate_asa_polar(atoms, probe=PROBE_RADIUS):
     res_asa (Dict) : List of ASA for every residue of the list.
     chain_stat (Dict) : List of ASA of each chain of the protein.
     """
+
     sphere = generate_sphere_points(POINTS_PER_SPHERE)
     point_area = 4 * math.pi / POINTS_PER_SPHERE
-    res_asa = defaultdict(float)
+    res_asa = {}
     chain_stats = defaultdict(lambda: {
         "main": 0.0, "side": 0.0,
         "polar": 0.0, "apolar": 0.0,
@@ -200,64 +165,27 @@ def calculate_asa_polar(atoms, probe=PROBE_RADIUS):
                 exposed_points += 1
 
         atom_asa = exposed_points * point_area * (r ** 2)
-        res_asa[key] += atom_asa
+        if key not in res_asa:
+            res_asa[key] = {"total": 0.0, "polar": 0.0, "apolar": 0.0}
+        res_asa[key]["total"] += atom_asa
+
         chain_stats[chain]["total"] += atom_asa
 
+        # Discriminates MAIN chain an SIDE chain
         if atom_name in MAIN_CHAIN_ATOMS:
             chain_stats[chain]["main"] += atom_asa
         else:
             chain_stats[chain]["side"] += atom_asa
 
+        # Discriminates POLAR elements ande NON-POLAR elements
         if element in POLAR_ELEMENTS:
+            res_asa[key]["polar"] += atom_asa
             chain_stats[chain]["polar"] += atom_asa
         else:
+            res_asa[key]["apolar"] += atom_asa
             chain_stats[chain]["apolar"] += atom_asa
 
     return res_asa, chain_stats
-
-
-def calculate_asa_residue(atoms, probe=PROBE_RADIUS):
-    """ Returns the ASA (Accessible Solvant Area) of each residues.
-
-    Parameters
-    ---
-    atoms ([Dict]) : List of atoms to process to calculate ASA.
-    probe (float) : Radius of the probe. Default value is set to constant PROBE_RADIUS.
-
-    Returns
-    ---
-    res_asa (Dict) : List of ASA for every residue of the list.
-    """
-    sphere = generate_sphere_points(POINTS_PER_SPHERE)
-    point_area = 4 * math.pi / POINTS_PER_SPHERE
-    res_asa = {}
-
-    for atom in atoms:
-        x, y, z = atom["x"], atom["y"], atom["z"]
-        element = atom["element"]
-        r = VDW_RADII.get(element, 1.7) + probe
-
-        exposed_points = 0
-        for dx, dy, dz in sphere:
-            px = x + r * dx
-            py = y + r * dy
-            pz = z + r * dz
-            if is_point_exposed(px, py, pz, atoms, atom, probe):
-                exposed_points += 1
-
-        atom_asa = exposed_points * point_area * (r ** 2)
-        key = (atom["chain"], atom["res_id"], atom["res"])
-        if key not in res_asa:
-            res_asa[key] = {"total": 0.0, "polar": 0.0, "apolar": 0.0}
-        
-        res_asa[key]["total"] += atom_asa
-        if element in {"N", "O", "S"}:
-            res_asa[key]["polar"] += atom_asa
-        else:
-            res_asa[key]["apolar"] += atom_asa
-
-    return res_asa
-    
 
 # ===========================
 # MAIN
@@ -268,8 +196,8 @@ def main():
     pdb_file = "./Data/2c8r.pdb"
     atoms = read_pdb(pdb_file)
     
-    # Residues
-    res_asa = calculate_asa_residue(atoms)
+    # Residues, Chain
+    res_asa, chain_stats = calculate_asa(atoms)
     print("\nResidue ASA and RSA:")
     print(f"{'Chain':<5} {'ResID':<6} {'ResName':<7} "
           f"{'TotalASA':<10} {'RSA(%)':<8} "
@@ -290,8 +218,6 @@ def main():
               f"{total:<10.2f} {rsa_total:<8.2f} "
               f"{polar:<10.2f} {rsa_polar:<10.2f} "
               f"{apolar:<11.2f} {rsa_apolar:<10.2f}")
-
-    res_asa, chain_stats = calculate_asa_polar(atoms)
 
     print("\nPer-Chain ASA Summary:")
     print(f"{'Chain':<5} {'Main ASA':<12} {'Side ASA':<12} {'Polar ASA':<12} {'Apolar ASA':<12} {'Total ASA':<12}")
