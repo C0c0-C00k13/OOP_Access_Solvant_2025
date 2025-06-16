@@ -39,9 +39,12 @@ if __name__ == "__main__":
         logger.debug(msg=f"Values contained in atom_list variable : {atom_list}")
         atom_caracteristics = file_manager.load_data_from_file(FILENAME_RADIUS, ATOM_CARACTERISTIC_FILE_HEADER)
         logger.debug(msg=f"Values contained in atom_caracteristics variable : {atom_caracteristics}")
-        logger.info(msg="READING FILES - DONE")
-
+        logger.info(msg="Loading atoms from list - DONE")
+        
+        logger.info(msg="Generating atoms list with complete caracteristics...")
         complete_atom_list = atom_manager.generating_atom_with_caracteristic_list(atom_list, atom_caracteristics)
+        logger.info(msg="Generating atoms list with complete caracteristics - DONE")
+        logger.debug(msg=f"Values contained in complete_atom_list variable : {complete_atom_list}")
     except:
         logger.error(msg="Something went wrong during the process.")
     # pass
