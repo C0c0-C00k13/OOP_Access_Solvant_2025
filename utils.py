@@ -4,8 +4,6 @@ import math
 import logging
 logger = logging.getLogger(__name__)
 
-# Utils
-
 def generate_sphere_template(n):
     """
     Generates a n-points quasi-uniform sphere based on Saff and Kuijlaars algorithm.
@@ -39,7 +37,42 @@ def generate_sphere_template(n):
     return points
 
 
-# def distance_between_two_3d_coordinates():
+def distance_between_two_3d_coordinates(coord_a, coord_b)->float:
+    """Calculates distance between 2 points
+    
+    Parameters
+    ---
+    coord_a : Coordinates from either a point of a an atom or an atom.
+    coord_b : Coordinates from either a point of a an atom or an atom.
+    
+    Returns
+    ---
+    distance (float) : Distance from 2 points (a, b).
+    """
+
+    # logger.debug(msg=f"Running 'distance_between_two_3d_coordinates'...")
+
+    dx = coord_a[0] - coord_b[0]
+    dy = coord_a[1] - coord_b[1]
+    dz = coord_a[2] - coord_b[2]
+    return dx * dx + dy * dy + dz * dz
+
+
+def calculate_sphere_surface(radius)->float:
+    """Returns the sphere surface area of a sphere. 
+
+    Parameter
+    ---
+    radius (float) : Radius of a sphere.
+
+    Returns
+    ---
+    (float) : Surface area of the sphere.
+    """
+
+    # logger.debug(msg=f"Running 'calculate_sphere_surface'...")
+    return 4 * math.pi * radius**2
+
 
 if __name__ == "main":
     pass

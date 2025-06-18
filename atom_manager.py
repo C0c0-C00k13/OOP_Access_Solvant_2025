@@ -1,4 +1,4 @@
-"""Define Atom object"""
+"""List of functions specific to an Atom object"""
 
 import utils
 import logging
@@ -53,6 +53,7 @@ def generate_spheres_from_atom_list(atom_list, n):
     sphere_from_atom_list : List of spheres representing every atom of the list.
     """
 
+    logger.debug(msg=f"Running 'generate_spheres_from_atom_list' function.")
     sphere_points_template = utils.generate_sphere_template(n)
     sphere_from_atom_list = {}
 
@@ -68,8 +69,29 @@ def generate_spheres_from_atom_list(atom_list, n):
             sphere_points.append( (x,y,z) )
 
         sphere_from_atom_list[atom["atom_serial"]] = sphere_points
-
+    logger.debug(msg=f"'generate_spheres_from_atom_list' function : done.")
     return sphere_from_atom_list
+
+def calculating_atom_max_asa(atom_list):
+    """Returns the sphere surface area of each atom of the atom_list. 
+
+    Parameter
+    ---
+    radius ([Dict]) : List of atoms.
+
+    Returns
+    ---
+    ([Dict]) : List of atoms updated with the surface area of each atom.
+    """
+
+    # logger.debug(msg=f"Running 'calculating_atom_max_asa'")
+    for atom in atom_list:
+        logger.debug(msg=f"Current atom : {atom}")
+        max_asa = utils.calculate_sphere_surface(float(atom['radius']))
+        logger.debug(msg=f"Updating current atom with {max_asa}")
+        atom.update({'max_asa' : max_asa})
+    
+    return atom_list
 
 
 if __name__ == "__main__":

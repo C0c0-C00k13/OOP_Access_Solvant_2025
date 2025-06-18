@@ -1,6 +1,8 @@
 """Functions to load atoms from any files and write files."""
+
 import logging
 logger = logging.getLogger(__name__)
+
 
 def load_data_from_file(filename, header):
     """Returns a list of data extracted from the file accessed.
