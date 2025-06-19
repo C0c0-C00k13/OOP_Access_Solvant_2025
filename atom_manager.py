@@ -32,8 +32,8 @@ def generating_atom_with_caracteristic_list(simple_atom_list, atom_caracteristic
     # logger.debug(msg=f"Concatenation of dictionaries with the same value 'atom_name'.")
     complete_atom_list = list(
         map(
-            lambda atom: {**atom, **characteristics_dict[atom['element']]} 
-            if atom['element'] in characteristics_dict else None,
+            lambda atom: {**atom, **characteristics_dict[atom['atom_name']]} 
+            if atom['atom_name'] in characteristics_dict else None,
             simple_atom_list
         )
     )
@@ -126,7 +126,7 @@ def is_point_exposed(px, py, pz, atoms, current_atom_serial, probe):
     atoms (List) : List of of atoms.
     current_atom_serial (int): Serial ID of atom.  
     probe (float) : Radius of probe.
-    vdw_radii (Dict) : Listt of radius of every atom.
+    vdw_radii (Dict) : List of radius of every atom.
 
     Returns
     ---
@@ -146,8 +146,9 @@ def is_point_exposed(px, py, pz, atoms, current_atom_serial, probe):
         logger.debug(msg=f"Radius of current 'other' atom : {threshold} ; Square {threshold**2} ; Distance {distance}")
 
         if distance < threshold_square:
-            logger.debug(msg=f"False for atom {current_atom_serial} compared with atom  {atom}")
+            # logger.debug(msg=f"False for atom {current_atom_serial} compared with atom  {atom}")
             return False
+    logger.debug(msg=f"True for atom {current_atom_serial} point {px,py,pz}")
     return True
 
 if __name__ == "__main__":
