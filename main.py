@@ -31,15 +31,15 @@ logger.addHandler(ch)
 
 
 if __name__ == "__main__":
-    logging.basicConfig(filename='./Logs/main.log', level=logging.DEBUG)
+    logging.basicConfig(filename='./Logs/main.log', level=logging.DEBUG, filemode='w')
     logger.info(msg='Started')
 
     try:
         logger.info(msg="Loading atoms list from file...")
         atom_list = file_manager.load_data_from_file(FILENAME_PROTEIN, ATOM_FILE_HEADER)
-        logger.debug(msg=f"Values contained in 'atom_list' variable : {atom_list}")
+        # logger.debug(msg=f"Values contained in 'atom_list' variable : {atom_list}")
         atom_caracteristics = file_manager.load_data_from_file(FILENAME_RADIUS, ATOM_CARACTERISTIC_FILE_HEADER)
-        logger.debug(msg=f"Values contained in 'atom_caracteristics' variable : {atom_caracteristics}")
+        # logger.debug(msg=f"Values contained in 'atom_caracteristics' variable : {atom_caracteristics}")
         logger.info(msg="Loading atoms from list - DONE")
 
         logger.info(msg="Generating atoms list with complete caracteristics...")
@@ -53,9 +53,14 @@ if __name__ == "__main__":
         logger.info(msg="Generating list of spheres represented by atoms - DONE")
 
         logger.info(msg="Calculating Maximum Accessible Surface of each atom...")
-        new_complete_atom_list = atom_manager.calculating_atom_max_asa(complete_atom_list)
-        logger.debug(msg=f"Values contained in 'new_complete_atom_list' variable : {new_complete_atom_list}")
+        new_complete_atom_list = atom_manager.calculating_atom_max_exposed_surface(complete_atom_list)
+        # logger.debug(msg=f"Values contained in 'new_complete_atom_list' variable : {new_complete_atom_list}")
         logger.info(msg="Calculating Maximum Accessible Surface of each atom - DONE")
+
+        logger.info(msg="Calculating Number of points exposed per atom...")
+        list_exposed_points_per_atom = atom_manager.nb_of_points_exposed_per_atom(spheres_list, complete_atom_list, RADIUS_PROBE)
+        logger.debug(msg=f"Values contained in 'list_exposed_points_per_atom' variable : {list_exposed_points_per_atom}")
+        logger.info(msg="Calculating Number of points exposed per atom - DONE")
 
     except:
         logger.error(msg="Something went wrong during the process.")
