@@ -4,6 +4,23 @@ import argparse
 import datetime
 from collections import defaultdict
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
+# create logger with '__name__'
+logger.setLevel(logging.DEBUG)
+# create file handler which logs even debug messages
+fh = logging.FileHandler('./Logs/main.log')
+fh.setLevel(logging.DEBUG)
+# create console handler with a higher log level
+ch = logging.StreamHandler()
+ch.setLevel(logging.ERROR)
+# create formatter and add it to the handlers
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+fh.setFormatter(formatter)
+ch.setFormatter(formatter)
+# add the handlers to the logger
+logger.addHandler(fh)
+logger.addHandler(ch)
 
 # ===========================
 # CONFIGURATION
@@ -240,15 +257,20 @@ def is_point_exposed(px, py, pz, atoms, this_atom,
     ---
     True/ False (boolean)    
     """
-    
+
     for atom in atoms:
         if atom is this_atom:
             continue
         ex, ey, ez = atom["x"], atom["y"], atom["z"]
-        r = vdw_radii.get(atom["element"], 1.7) + probe
+        r = vdw_radii.get(atom["atom_name"], 1.7) + probe
         dx, dy, dz = px - ex, py - ey, pz - ez
-        if dx*dx + dy*dy + dz*dz < r * r:
+        distance = dx*dx + dy*dy + dz*dz
+        r_square = r**2
+        logger.debug(msg=f"Radius of current 'other' atom : {r} ; Square {r_square} ; Distance {distance}")
+        if distance <r_square:
+            logger.debug(msg=f"False for atom {this_atom}, point {(px, py, pz)} compared with atom  {atom}")
             return False
+    
     return True
 
 # ===========================
@@ -290,7 +312,7 @@ def calculate_asa(atoms, hetatoms, probe=PROBE_RADIUS,
         res_id = atom["res_id"]
         key = (chain, res_id, res)
 
-        r = vdw_radii.get(element, 1.7) + probe
+        r = vdw_radii.get(atom_name, 1.7) + probe
         exposed_points = 0
 
         for dx, dy, dz in sphere:
@@ -303,7 +325,11 @@ def calculate_asa(atoms, hetatoms, probe=PROBE_RADIUS,
 
         atom_asa = exposed_points * point_area * (r ** 2)
         if key not in res_asa:
-            res_asa[key] = {"total": 0.0, "polar": 0.0, "apolar": 0.0}
+            res_asa[key] = {
+                "total": 0.0,
+                "polar": 0.0, "apolar": 0.0,
+                "main": 0.0, "side": 0.0
+            }
         res_asa[key]["total"] += atom_asa
 
         chain_stats[chain]["total"] += atom_asa
@@ -311,8 +337,10 @@ def calculate_asa(atoms, hetatoms, probe=PROBE_RADIUS,
         # Discriminates MAIN chain an SIDE chain
         if atom_name in main_chain_elements:
             chain_stats[chain]["main"] += atom_asa
+            res_asa[key]["main"] += atom_asa
         else:
             chain_stats[chain]["side"] += atom_asa
+            res_asa[key]["side"] += atom_asa
 
         # Discriminates POLAR elements ande NON-POLAR elements
         if element in polar_list:
@@ -331,39 +359,43 @@ def calculate_asa(atoms, hetatoms, probe=PROBE_RADIUS,
 # ===========================
 
 def write_output(filename, res_asa, chain_stats, max_asa=MAX_ASA):
-    with open(filename, 'w') as f:
-        f.write("\nResidue ASA and RSA:\n")
-        f.write(f"{'Chain':<5} {'ResID':<6} {'ResName':<7} "
-                f"{'TotalASA':<10} {'RSA(%)':<8} "
-                f"{'PolarASA':<10} {'PolarRSA':<10} "
-                f"{'ApolarASA':<11} {'ApolarRSA':<10}\n")
-
-        for (chain, res_id, res_name), data in sorted(res_asa.items()):
-            max_ref = max_asa.get(res_name, 200)
-            total = data["total"]
-            polar = data["polar"]
-            apolar = data["apolar"]
-
-            rsa_total = (total / max_ref) * 100
-            rsa_polar = (polar / max_ref) * 100
-            rsa_apolar = (apolar / max_ref) * 100
-
-            f.write(f"{chain:<5} {res_id:<6} {res_name:<7} "
-                    f"{total:<10.2f} {rsa_total:<8.2f} "
-                    f"{polar:<10.2f} {rsa_polar:<10.2f} "
-                    f"{apolar:<11.2f} {rsa_apolar:<10.2f}\n")
-
-        f.write("\nPer-Chain ASA Summary:\n")
-        f.write(f"{'Chain':<5} {'Main ASA':<12} {'Side ASA':<12} {'Polar ASA':<12} {'Apolar ASA':<12} {'Total ASA':<12}\n")
-        for chain, stats in sorted(chain_stats.items()):
-            f.write(f"{chain:<5} {stats['main']:<12.2f} {stats['side']:<12.2f} "
-                    f"{stats['polar']:<12.2f} {stats['apolar']:<12.2f} {stats['total']:<12.2f}\n")
+    # with open(filename, 'w') as f:
+    print("\nResidue ASA and RSA:\n")
+    print(f"{'Chain':<5} {'ResID':<6} {'ResName':<7} "
+            f"{'TotalASA':<10} {'RSA(%)':<8} "
+            f"{'PolarASA':<10} {'PolarRSA':<10} "
+            f"{'ApolarASA':<11} {'ApolarRSA':<10}\n")
+    for (chain, res_id, res_name), data in sorted(res_asa.items()):
+        max_ref = max_asa.get(res_name, 200)
+        total = data["total"]
+        # main_chain = data["main"]
+        # side_chain = data["side"]
+        polar = data["polar"]
+        apolar = data["apolar"]
+        rsa_total = (total / max_ref) * 100
+        # rsa_main = (main_chain / max_ref) * 100
+        # rsa_side = (side_chain / max_ref) * 100
+        rsa_polar = (polar / max_ref) * 100
+        rsa_apolar = (apolar / max_ref) * 100
+        print(f"{chain:<5} {res_id:<6} {res_name:<7} "
+                f"{total:<10.2f} {rsa_total:<8.2f} "
+                # f"{main_chain:<10.2f} {rsa_main:<10.2f} "
+                # f"{side_chain:<10.2f} {rsa_side:<10.2f} "
+                f"{polar:<10.2f} {rsa_polar:<10.2f} "
+                f"{apolar:<11.2f} {rsa_apolar:<10.2f}\n")
+    print("\nPer-Chain ASA Summary:\n")
+    print(f"{'Chain':<5} {'Main ASA':<12} {'Side ASA':<12} {'Polar ASA':<12} {'Apolar ASA':<12} {'Total ASA':<12}\n")
+    for chain, stats in sorted(chain_stats.items()):
+        print(f"{chain:<5} {stats['main']:<12.2f} {stats['side']:<12.2f} "
+                f"{stats['polar']:<12.2f} {stats['apolar']:<12.2f} {stats['total']:<12.2f}\n")
 
 # ===========================
 # MAIN
 # ===========================
 
 def main():
+    logging.basicConfig(filename='./Logs/SASA.log', level=logging.INFO, filemode='w')
+    logger.info(msg='Started')
     today = datetime.datetime.now().strftime("%m-%d-%Y %H:%M:%S")
     print(today)
     args = parse_args()
@@ -392,12 +424,14 @@ def main():
                                         polar_list=polar_elements, vdw_radii=description_radii,
                                         point_per_sphere=point_per_sphere, main_chain_elements=MAIN_CHAIN_ATOMS)
 
-    path_result_directory = f"./Results/{today.split()[0]}/{output}"
+
+    path_result_directory = f"./Results/{today.split()[0]}/{pdb_file.strip().split('/')[-1][:-4]}/SASA"
     nested_directory_path = Path(path_result_directory)
     nested_directory_path.mkdir(parents=True, exist_ok=True)
     output_filename = f"{path_result_directory}/{output}.asa"
     write_output(filename=output_filename, res_asa=res_asa, chain_stats=chain_stats, max_asa=max_axa)
     print(f"The output file '{output}.asa' has been created in the directory: {nested_directory_path}")
+    print('Done')
 
 
 if __name__ == "__main__":
