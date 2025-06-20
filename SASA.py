@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 # create logger with '__name__'
 logger.setLevel(logging.DEBUG)
 # create file handler which logs even debug messages
-fh = logging.FileHandler('./Logs/main.log')
+fh = logging.FileHandler('./Logs/SASA.log')
 fh.setLevel(logging.DEBUG)
 # create console handler with a higher log level
 ch = logging.StreamHandler()
@@ -266,9 +266,9 @@ def is_point_exposed(px, py, pz, atoms, this_atom,
         dx, dy, dz = px - ex, py - ey, pz - ez
         distance = dx*dx + dy*dy + dz*dz
         r_square = r**2
-        logger.debug(msg=f"Radius of current 'other' atom : {r} ; Square {r_square} ; Distance {distance}")
+        # logger.debug(msg=f"Radius of current 'other' atom : {r} ; Square {r_square} ; Distance {distance}")
         if distance <r_square:
-            logger.debug(msg=f"False for atom {this_atom}, point {(px, py, pz)} compared with atom  {atom}")
+            # logger.debug(msg=f"False for atom {this_atom}, point {(px, py, pz)} compared with atom  {atom}")
             return False
     
     return True
@@ -359,35 +359,37 @@ def calculate_asa(atoms, hetatoms, probe=PROBE_RADIUS,
 # ===========================
 
 def write_output(filename, res_asa, chain_stats, max_asa=MAX_ASA):
-    # with open(filename, 'w') as f:
-    print("\nResidue ASA and RSA:\n")
-    print(f"{'Chain':<5} {'ResID':<6} {'ResName':<7} "
-            f"{'TotalASA':<10} {'RSA(%)':<8} "
-            f"{'PolarASA':<10} {'PolarRSA':<10} "
-            f"{'ApolarASA':<11} {'ApolarRSA':<10}\n")
-    for (chain, res_id, res_name), data in sorted(res_asa.items()):
-        max_ref = max_asa.get(res_name, 200)
-        total = data["total"]
-        # main_chain = data["main"]
-        # side_chain = data["side"]
-        polar = data["polar"]
-        apolar = data["apolar"]
-        rsa_total = (total / max_ref) * 100
-        # rsa_main = (main_chain / max_ref) * 100
-        # rsa_side = (side_chain / max_ref) * 100
-        rsa_polar = (polar / max_ref) * 100
-        rsa_apolar = (apolar / max_ref) * 100
-        print(f"{chain:<5} {res_id:<6} {res_name:<7} "
-                f"{total:<10.2f} {rsa_total:<8.2f} "
-                # f"{main_chain:<10.2f} {rsa_main:<10.2f} "
-                # f"{side_chain:<10.2f} {rsa_side:<10.2f} "
-                f"{polar:<10.2f} {rsa_polar:<10.2f} "
-                f"{apolar:<11.2f} {rsa_apolar:<10.2f}\n")
-    print("\nPer-Chain ASA Summary:\n")
-    print(f"{'Chain':<5} {'Main ASA':<12} {'Side ASA':<12} {'Polar ASA':<12} {'Apolar ASA':<12} {'Total ASA':<12}\n")
-    for chain, stats in sorted(chain_stats.items()):
-        print(f"{chain:<5} {stats['main']:<12.2f} {stats['side']:<12.2f} "
-                f"{stats['polar']:<12.2f} {stats['apolar']:<12.2f} {stats['total']:<12.2f}\n")
+    with open(filename, 'w') as f:
+        f.write("\nResidue ASA and RSA:\n")
+        f.write(f"{'Chain':<5} {'ResID':<6} {'ResName':<7} "
+                f"{'TotalASA':<10} {'RSA(%)':<8} "
+                f"{'MainASA':<10} {'MainRSA(%)':<8} "
+                f"{'SideASA':<10} {'SideRSA(%)':<8} "
+                f"{'PolarASA':<10} {'PolarRSA':<10} "
+                f"{'ApolarASA':<11} {'ApolarRSA':<10}\n")
+        for (chain, res_id, res_name), data in sorted(res_asa.items()):
+            max_ref = max_asa.get(res_name, 200)
+            total = data["total"]
+            main_chain = data["main"]
+            side_chain = data["side"]
+            polar = data["polar"]
+            apolar = data["apolar"]
+            rsa_total = (total / max_ref) * 100
+            rsa_main = (main_chain / max_ref) * 100
+            rsa_side = (side_chain / max_ref) * 100
+            rsa_polar = (polar / max_ref) * 100
+            rsa_apolar = (apolar / max_ref) * 100
+            f.write(f"{chain:<5} {res_id:<6} {res_name:<7} "
+                    f"{total:<10.2f} {rsa_total:<8.2f} "
+                    f"{main_chain:<10.2f} {rsa_main:<10.2f} "
+                    f"{side_chain:<10.2f} {rsa_side:<10.2f} "
+                    f"{polar:<10.2f} {rsa_polar:<10.2f} "
+                    f"{apolar:<11.2f} {rsa_apolar:<10.2f}\n")
+        f.write("\nPer-Chain ASA Summary:\n")
+        f.write(f"{'Chain':<5} {'Main ASA':<12} {'Side ASA':<12} {'Polar ASA':<12} {'Apolar ASA':<12} {'Total ASA':<12}\n")
+        for chain, stats in sorted(chain_stats.items()):
+            f.write(f"{chain:<5} {stats['main']:<12.2f} {stats['side']:<12.2f} "
+                    f"{stats['polar']:<12.2f} {stats['apolar']:<12.2f} {stats['total']:<12.2f}\n")
 
 # ===========================
 # MAIN
@@ -411,14 +413,14 @@ def main():
     print(f"Include HETATM   : {include_hetatm}")
     print(f"Probe radius     : {probe_radius}")
     print(f"Custom radii file: {custom_radii_file}")
-    
+
     description_radii, polar_elements, max_axa = VDW_RADII, POLAR_ELEMENTS, MAX_ASA
     if custom_radii_file is not None:
         if os.path.exists(custom_radii_file):
             description_radii, polar_elements, max_axa = set_description(custom_radii_file)
 
     atoms, hetatoms = read_pdb(filename=pdb_file, add_hetatm=include_hetatm)
-    
+
     # Residues, Chain
     res_asa, chain_stats = calculate_asa(atoms=atoms,hetatoms=hetatoms, probe=probe_radius,
                                         polar_list=polar_elements, vdw_radii=description_radii,
