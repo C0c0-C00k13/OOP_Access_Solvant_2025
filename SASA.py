@@ -52,7 +52,7 @@ def parse_args():
 
     Returns
     ---
-    parser.parse_args() (Namespace) : 
+    parser.parse_args() (Namespace) : Argument inputs.
     """
 
     parser = argparse.ArgumentParser(description="Compute ASA/RSA from PDB.")
@@ -70,7 +70,6 @@ def parse_args():
                         help="Custom radii file (default: None)")
 
     return parser.parse_args()
-
 
 # ===========================
 # STEP 1: READ PDB FILE
@@ -286,6 +285,10 @@ def calculate_asa(atoms, hetatoms, probe=PROBE_RADIUS,
     ---
     atoms ([Dict]) : List of atoms to process to calculate ASA.
     probe (float) : Radius of the probe. Default value is set to constant PROBE_RADIUS.
+    point_per_sphere (int) : Number of points representing a sphere.
+    vdw_radii (Dict) : Radius of each atom.
+    polar_list (Dict) : Polar atoms.
+    main_chain_elements (Dict) : Atoms from the main chain of the protein.
 
     Returns
     ---
@@ -328,15 +331,12 @@ def calculate_asa(atoms, hetatoms, probe=PROBE_RADIUS,
                 exposed_points += 1
 
         atom_asa = exposed_points * point_area * (r ** 2)
-        atom_asa_details.append({'atom_serial' : atom_serial,
-                              'atom_name' : atom_name,
-                              'res_name' : res,
-                              'chain' : chain,
-                              'res_id' : res_id,
-                              'x' : x, 'y' : y, 'z' : z,
-                              'asa' : atom_asa,
+        atom_asa_details.append({'atom_serial' : atom_serial, 'atom_name' : atom_name,
+                              'res_name' : res, 'chain' : chain, 'res_id' : res_id,
+                              'x' : x, 'y' : y, 'z' : z, 'asa' : atom_asa,
                               'radius' : vdw_radii.get(atom_name, 1.7)
                               })
+    
         if key not in res_asa:
             res_asa[key] = {
                 "total": 0.0,
@@ -372,6 +372,20 @@ def calculate_asa(atoms, hetatoms, probe=PROBE_RADIUS,
 # ===========================
 
 def write_residue_asa_output(filename, res_asa, chain_stats, max_asa=MAX_ASA):
+    """Write the output file of ASA of residue.
+    
+    Parameters
+    ---
+    filename (str) : Name of the output file.
+    res_asa (Dict) : ASA of residues.
+    chain_stats (Dict) : ASA of chains.
+    max_asa (Dict) : Radius of spheres.
+    
+    Returns
+    ---
+    None
+    
+    """
     with open(filename, 'w') as f:
         f.write("\nResidue ASA and RSA:\n")
         f.write(f"{'Chain':<5} {'ResID':<6} {'ResName':<7} "
@@ -405,28 +419,55 @@ def write_residue_asa_output(filename, res_asa, chain_stats, max_asa=MAX_ASA):
                     f"{stats['polar']:<12.2f} {stats['apolar']:<12.2f} {stats['total']:<12.2f}\n")
 
 
-def write_log(filename, date, args, rsa_filename):
+def write_log(filename, date, args, rsa_filename, asa_filename):
+    """Write the log file of ASA of residue.
+
+    Parameters
+    ---
+    filename (str) : Name of the log file.
+    date (str) : Date of Execution.
+    args (Namespace) : arguments inputs.
+    rsa_filename (str) : Name of the ASA per residue file.
+    asa_filename (str) : Name of the ASA per atom file.
+
+    Returns
+    ---
+    None
+    
+    """
     with open(filename, 'w') as f_o:
-        f_o.write(f"{'DATE':<18}: {date}\n")
+        f_o.write(f"{'DATE':<30}: {date}\n")
         f_o.write("\n" + "*" * 40 + "\n")
 
         f_o.write("INPUT\n")
-        f_o.write(f"{'PDB FILE':<18}: {args.pdb_file}\n")
+        f_o.write(f"{'PDB FILE':<30}: {args.pdb_file}\n")
         f_o.write("*" * 40 + "\n" * 2)
 
         include_hetatm = "YES" if args.hetero == "y" else "NO"
-        f_o.write(f"{'INCLUDE HETATM':<18}: {include_hetatm}\n")
-        f_o.write(f"{'POINTS PER SPHERE':<18}: {args.points}\n")
-        f_o.write(f"{'PROBE RADIUS':<18}: {args.probe}\n")
-        f_o.write(f"{'Custom radii file':<18}: {args.radii}\n")
+        f_o.write(f"{'INCLUDE HETATM':<30}: {include_hetatm}\n")
+        f_o.write(f"{'POINTS PER SPHERE':<30}: {args.points}\n")
+        f_o.write(f"{'PROBE RADIUS':<30}: {args.probe}\n")
+        f_o.write(f"{'Custom radii file':<30}: {args.radii}\n")
 
         f_o.write("\n" + "*" * 40 + "\n")
         f_o.write("OUTPUT\n")
         f_o.write("*" * 40 + "\n" * 2)
-        f_o.write(f"{'ACCESSIBLE SURFACE':<18}: '{rsa_filename}'\n")
+        f_o.write(f"{'ACCESSIBLE SURFACE RESIDUE':<30}: '{rsa_filename}'\n")
+        f_o.write(f"{'ACCESSIBLE SURFACE ATOM':<30}: '{asa_filename}'\n")
 
 
 def write_atom_asa_output(filename, atom_asa_list):
+    """Write the output file of ASA of atom.
+
+    Parameters
+    ---
+    filename (str) : Name of the output file.
+    atom_asa_list ([Dist]) : ASA of atoms.
+
+    Returns
+    ---
+    None
+    """
     with open(filename, 'w') as f:
         for atom in atom_asa_list:
             f.write(f"ATOM\t{atom['atom_serial']}\t{atom['atom_name']}\t"
@@ -477,16 +518,16 @@ def main():
     nested_directory_path.mkdir(parents=True, exist_ok=True)
 
     # Write the residue-level RSA to file
-    output_filename = f"{path_result_directory}/{output}.rsa"
-    write_residue_asa_output(filename=output_filename, res_asa=res_asa, chain_stats=chain_stats, max_asa=max_axa)
+    rsa_output_filename = f"{path_result_directory}/{output}.rsa"
+    write_residue_asa_output(filename=rsa_output_filename, res_asa=res_asa, chain_stats=chain_stats, max_asa=max_axa)
 
     # Write the atom-level ASA to file
-    output_filename = f"{path_result_directory}/{output}.asa"
-    write_atom_asa_output(output_filename, atom_asa)
+    asa_output_filename = f"{path_result_directory}/{output}.asa"
+    write_atom_asa_output(asa_output_filename, atom_asa)
 
     # Write the parameters to log file
     log_filename = f"{path_result_directory}/{output}.log"
-    write_log(log_filename, today, args, output_filename)
+    write_log(log_filename, today, args, rsa_output_filename, asa_output_filename)
 
     # End of the Execution
     print(f"The output files '{output}.*' has been created in the directory: {nested_directory_path}")

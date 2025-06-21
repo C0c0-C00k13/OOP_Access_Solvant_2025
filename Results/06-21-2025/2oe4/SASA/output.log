@@ -1,8 +1,8 @@
-DATE                          : 06-21-2025 13:51:49
+DATE                          : 06-21-2025 13:52:05
 
 ****************************************
 INPUT
-PDB FILE                      : Data/2c8r.pdb
+PDB FILE                      : Data/2oe4.pdb
 ****************************************
 
 INCLUDE HETATM                : NO
@@ -14,5 +14,5 @@ Custom radii file             : None
 OUTPUT
 ****************************************
 
-ACCESSIBLE SURFACE RESIDUE    : './Results/06-21-2025/2c8r/SASA/output.rsa'
-ACCESSIBLE SURFACE ATOM       : './Results/06-21-2025/2c8r/SASA/output.asa'
+ACCESSIBLE SURFACE RESIDUE    : './Results/06-21-2025/2oe4/SASA/output.rsa'
+ACCESSIBLE SURFACE ATOM       : './Results/06-21-2025/2oe4/SASA/output.asa'
