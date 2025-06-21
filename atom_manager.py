@@ -1,14 +1,9 @@
 """List of functions specific to an Atom object"""
 
-import utils
+from collections import defaultdict
 import logging
+import utils
 logger = logging.getLogger(__name__)
-
-
-# class Atom():
-# Attributes
-# Methods
-# determine_the_atom_exposed_surface
 
 
 def generating_atom_with_caracteristic_list(simple_atom_list, atom_caracteristics):
@@ -21,7 +16,7 @@ def generating_atom_with_caracteristic_list(simple_atom_list, atom_caracteristic
     
     Returns
     ---
-    complete_atom_list (List) :
+    complete_atom_list (List[Dict]) :
     """ 
 
     # Lookup dictionary for atom_caracteristics by element
@@ -86,7 +81,7 @@ def calculating_atom_max_exposed_surface(atom_list):
 
     # logger.debug(msg=f"Running 'calculating_atom_max_asa'")
     for atom in atom_list:
-        logger.debug(msg=f"Current atom : {atom}")
+        # logger.debug(msg=f"Current atom : {atom}")
         max_asa = utils.calculate_sphere_surface(float(atom['radius']))
         # logger.debug(msg=f"Updating current atom with {max_asa}")
         atom.update({'max_asa' : max_asa})
@@ -99,30 +94,29 @@ def nb_of_points_exposed_per_atom(spheres_list, atom_list, probe):
     """
 
     list_nb_points_exposed_per_atom = {}
-    logger.debug(msg=f"1 : {spheres_list}.")
+    # logger.debug(msg=f"1 : {spheres_list}.")
     for point_list_couple in spheres_list.items():
         key = point_list_couple[0]
         list_points = point_list_couple[1]
-        logger.debug(msg=f"2 : {key, list_points}.")
+        # logger.debug(msg=f"2 : {key, list_points}.")
         nb_points_exposed = 0
-        logger.debug(msg=f"Current atom serial : {key}.")
+        # logger.debug(msg=f"Current atom serial : {key}.")
 
         for point in list_points:
-            if is_point_exposed(px=point[0], py= point[1], pz= point[2], atoms=atom_list, probe=probe, current_atom_serial = key):
+            if is_point_exposed(point, atom_list, key, probe):
                 nb_points_exposed += 1
+        # logger.debug(msg=f"Atom {key} : currently {nb_points_exposed} exposed point(s).")
         list_nb_points_exposed_per_atom[key] = nb_points_exposed
 
     return list_nb_points_exposed_per_atom
 
 
-def is_point_exposed(px, py, pz, atoms, current_atom_serial, probe):
+def is_point_exposed(current_point, atoms, current_atom_serial, probe):
     """ Returns a False if there is an overlap between to points of different atoms.
     
     Parameters
     ---
-    px (float) : Point coordinate on the x-axis.
-    py (float) : Point coordinate on the y-axis.
-    pz (float) : Point coordinate on the z-axis.
+    current_point () : Point .
     atoms (List) : List of of atoms.
     current_atom_serial (int): Serial ID of atom.  
     probe (float) : Radius of probe.
@@ -137,19 +131,107 @@ def is_point_exposed(px, py, pz, atoms, current_atom_serial, probe):
         if atom['atom_serial'] == current_atom_serial:
             continue
 
-        logger.debug(msg=f"Current 'other' atom : {atom}")
+        # logger.debug(msg=f"Current 'other' atom : {atom}")
         atom_coordinates = (float(atom["x"]), float(atom["y"]), float(atom["z"]))
         threshold = float(atom["radius"]) + probe
-
         threshold_square =  threshold **2
-        distance = utils.distance_between_two_3d_coordinates((px,py,pz), atom_coordinates)
-        logger.debug(msg=f"Radius of current 'other' atom : {threshold} ; Square {threshold**2} ; Distance {distance}")
+
+        distance = utils.distance_between_two_3d_coordinates(current_point, atom_coordinates)
+        # logger.debug(msg=f"Radius of current 'other' atom : {threshold} ; Square {threshold**2} ; Distance {distance}")
 
         if distance < threshold_square:
             # logger.debug(msg=f"False for atom {current_atom_serial} compared with atom  {atom}")
             return False
-    logger.debug(msg=f"True for atom {current_atom_serial} point {px,py,pz}")
+    # logger.debug(msg=f"Atom {current_atom_serial} - is_exposed : True -point exposed : {current_point}.")
     return True
+
+
+def calculate_atom_asa(atoms_list, exposed_points, nb_points_per_sphere):
+    """Returns the ASA (Accessible Solvent Area) of each atom and each residue.
+
+    Parameters
+    ---
+    atoms_list ([Dict]) : List of atoms to process to calculate ASA.
+    exposed_points (Dict) : Dict of exposed points keyed by atom serial number.
+    nb_points_per_sphere (int) : Number of points used for the sphere surface.
+
+    Returns
+    ---
+    atom_asa_list (Dict) : ASA per atom (angstrom^2 and percent).
+    residue_asa (Dict)   : Total ASA per residue.
+    """
+
+    main_chain_elements = {"N", "CA", "C", "O", "OXT", "H", "HA"}
+    polar_list = {"N", "O", "S"}
+    chain_stats = defaultdict(lambda: {
+        "main": 0.0, "side": 0.0,
+        "polar": 0.0, "apolar": 0.0,
+        "total": 0.0
+    })
+    atom_asa_list = {}
+    residue_asa = {}
+
+    for atom in atoms_list:
+        logger.debug(msg=f"ASA Calculus - Atom about to about to be processed : {atom}")
+        atom_max_asa = atom["max_asa"]
+        point_area = utils.calculate_point_surface(atom_max_asa, nb_points_per_sphere)
+        atom_key = atom["atom_serial"]
+        atom_angstrom_asa = exposed_points[atom_key] * point_area
+        atom_percent_asa = (atom_angstrom_asa / atom_max_asa) * 100
+
+        # Add to atom-level dictionary
+        atom_asa_list[atom_key] = {
+            'angstrom_asa': atom_angstrom_asa,
+            'percent_asa': atom_percent_asa
+        }
+        logger.debug(msg=f"Integration in Atom Dict of - Atom n°{atom_key}, {atom["atom_name"]} | Current value of de 'atom_asa_list' {atom_asa_list}.")
+
+        # Build residue key
+        residue_key = (atom["chain"], atom["num_residue"], atom["residue"])
+        chain = atom["chain"]
+
+        if residue_key not in residue_asa:
+            residue_asa[residue_key] = {
+                "total": 0.0,
+                "polar": 0.0, "apolar": 0.0,
+                "main": 0.0, "side": 0.0
+            }
+        residue_asa[residue_key]["total"] += atom_angstrom_asa
+
+        chain_stats[chain]["total"] += atom_angstrom_asa
+
+        # Discriminates MAIN chain an SIDE chain
+        if atom['atom_name'] in main_chain_elements:
+            chain_stats[chain]["main"] += atom_angstrom_asa
+            residue_asa[residue_key]["main"] += atom_angstrom_asa
+        else:
+            chain_stats[chain]["side"] += atom_angstrom_asa
+            residue_asa[residue_key]["side"] += atom_angstrom_asa
+
+        # Discriminates POLAR elements ande NON-POLAR elements
+        if atom['element'] in polar_list:
+            residue_asa[residue_key]["polar"] += atom_angstrom_asa
+            chain_stats[chain]["polar"] += atom_angstrom_asa
+        else:
+            residue_asa[residue_key]["apolar"] += atom_angstrom_asa
+            chain_stats[chain]["apolar"] += atom_angstrom_asa
+
+        logger.debug(f"Atom {atom_key} ({atom['atom_name']}): ASA = {atom_angstrom_asa:.2f} Å², ASA (%) = {atom_percent_asa:.2f} %")
+        logger.debug(f"Updated residue ASA for {residue_key}: MAIN : {residue_asa[residue_key]["main"]:.2f}\n\
+SIDE : {residue_asa[residue_key]["side"]:.2f} \nPOLAR : {residue_asa[residue_key]["polar"]:.2f} \nAPOLAR : {residue_asa[residue_key]["apolar"]:.2f} Å²")
+
+    return atom_asa_list, residue_asa, chain_stats
+
+# def print_result(atom_list, atom_asa_list):
+#     for atom, atom_asa in zip(atom_list, atom_asa_list):
+#         record = ["record"]
+#         atom_serial = atom["atom_serial"]
+#         atom_name = atom["atom_name"]
+#         residue = atom["residue"]
+#         chain = atom["chain"]
+#         num_residue = atom["num_residue"]
+#         x, y, z = atom["x"], atom["y"], atom["z"]
+#         radius = atom["radius"]
 
 if __name__ == "__main__":
     pass

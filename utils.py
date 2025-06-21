@@ -33,7 +33,7 @@ def generate_sphere_template(n):
         z =  math.sin(phi) * r
         points.append((x, y, z))
 
-    logger.debug(msg=f"Points of sphere : {points}.")
+    # logger.debug(msg=f"Points of sphere : {points}.")
     return points
 
 
@@ -55,7 +55,7 @@ def distance_between_two_3d_coordinates(coord_a, coord_b)->float:
     dx = coord_a[0] - coord_b[0]
     dy = coord_a[1] - coord_b[1]
     dz = coord_a[2] - coord_b[2]
-    return dx * dx + dy * dy + dz * dz
+    return dx*dx + dy*dy + dz*dz
 
 
 def calculate_sphere_surface(radius)->float:
@@ -73,6 +73,21 @@ def calculate_sphere_surface(radius)->float:
     # logger.debug(msg=f"Running 'calculate_sphere_surface'...")
     return 4 * math.pi * radius**2
 
+
+def calculate_point_surface(sphere_surface:float, point_per_sphere:int)->float:
+    """Returns the fraction a sphere surface occupied by 1 point.
+
+    Parameters
+    ---
+    sphere_surface (float) :
+    point_per_sphere (int) :
+
+    Returns
+    ---
+    (float) : Surface occupied by 1 point of a sphere.
+    
+    """
+    return sphere_surface / point_per_sphere
 
 if __name__ == "main":
     pass

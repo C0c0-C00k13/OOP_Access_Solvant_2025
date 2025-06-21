@@ -62,6 +62,13 @@ if __name__ == "__main__":
         logger.debug(msg=f"Values contained in 'list_exposed_points_per_atom' variable : {list_exposed_points_per_atom}")
         logger.info(msg="Calculating Number of points exposed per atom - DONE")
 
+        logger.info(msg="Calculating asa per atom and per residue...")
+        list_atom_asa, residue_asa, chain_stats = atom_manager.calculate_atom_asa(new_complete_atom_list, list_exposed_points_per_atom, SPHERE_NB_POINTS)
+        logger.debug(msg=f"Values contained in 'list_atom_asa' variable : {list_atom_asa}")
+        logger.debug(msg=f"Values contained in 'residue_asa' variable : {residue_asa}")
+        logger.info(msg="Calculating asa per atom and per residue - DONE")
+
+
     except:
         logger.error(msg="Something went wrong during the process.")
     logger.info(msg='End.')
