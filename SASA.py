@@ -391,6 +391,18 @@ def write_output(filename, res_asa, chain_stats, max_asa=MAX_ASA):
             f.write(f"{chain:<5} {stats['main']:<12.2f} {stats['side']:<12.2f} "
                     f"{stats['polar']:<12.2f} {stats['apolar']:<12.2f} {stats['total']:<12.2f}\n")
 
+def write_log(filename, date, args, rsa_filename):
+    with open(filename, 'w') as f_o:
+        
+        f_o.write(f"DATE          : {date}\n")
+        f_o.write(f"INPUT\nPDB FILE         : {args.pdb_file}\n")
+        f_o.write(f"INCLUDE HETATM   : {args.hetero}\n")
+        f_o.write(f"POINTS PER SPHERE   : {args.points}\n")
+        f_o.write(f"PROBE RADIUS     : {args.probe}\n")
+        f_o.write(f"Custom radii file: {args.radii}\n")
+        f_o.write(f"OUTPUT\nACCESSIBILE SURFACE: '{rsa_filename}'\n")
+
+
 # ===========================
 # MAIN
 # ===========================
@@ -432,6 +444,8 @@ def main():
     nested_directory_path.mkdir(parents=True, exist_ok=True)
     output_filename = f"{path_result_directory}/{output}.asa"
     write_output(filename=output_filename, res_asa=res_asa, chain_stats=chain_stats, max_asa=max_axa)
+    log_filename = f"{path_result_directory}/{output}.log"
+    write_log(log_filename, today, args, output_filename)
     print(f"The output file '{output}.asa' has been created in the directory: {nested_directory_path}")
     print('Done')
 
