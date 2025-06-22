@@ -3,9 +3,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import re
 import io
-
-import threading
-
+import utils
 
 # ----- INPUT DATA -----
 # Replace these with actual file reads (e.g., open("file.txt").read())
@@ -38,8 +36,9 @@ def parse_files(file1:str,file2:str):
         file2_lines = f2.readlines()
 
     differences = compare_files_by_atom_and_column(file1_lines, file2_lines)
-    for atom, diff in differences:
-        print(f"{atom}: {diff:.3f}")
+    x_labels = [atom_diff[0] for atom_diff in differences]
+    diff = [atom_diff[1] for atom_diff in differences]
+    display_atom_asa_diff(x_labels, diff)
 
 
 def compare_files_by_atom_and_column(file1_lines, file2_lines):
@@ -70,14 +69,27 @@ def compare_files_by_atom_and_column(file1_lines, file2_lines):
 def display_atom_asa_diff(x_labels, differences):
     # Create bar plot
     plt.figure(figsize=(10, 6))
-    plt.bar(x_labels, differences, color='skyblue')
+    bars = plt.bar(x_labels, differences, color='skyblue')
     plt.xlabel('Atom (with index)')
-    plt.ylabel('Absolute Difference in 10th Column')
-    plt.title('Differences in Column 10 Between File 1 and File 2')
+    plt.ylabel('Absolute Difference in ASA')
+    plt.title('Differences ASA Between NACCESS and SASA.py')
     plt.xticks(rotation=45)
     plt.tight_layout()
     plt.grid(axis='y', linestyle='--', alpha=0.7)
+    
+    # Add hover interactivity
+    try:
+        import mplcursors
+        cursor = mplcursors.cursor(bars, hover=True)
+        @cursor.connect("add")
+        def on_add(sel):
+            sel.annotation.set_text(f"{x_labels[sel.index]}, {differences[sel.index]:.3f}")
+    except ImportError:
+        print("The 'mplcursors' module is not installed. You can install it with:")
+        print("pip install mplcursors")
+        mplcursors = None  # Optional: Set to None to check later
 
+        
     # Show the plot
     plt.show()
 
@@ -122,23 +134,6 @@ def display_difference_per_residue(tool_df):
     plt.tight_layout()
     plt.show()
 
-def timed_input(prompt, timeout=5):
-    user_input = [None]
-
-    def get_input():
-        user_input[0] = input(prompt)
-
-    thread = threading.Thread(target=get_input)
-    thread.daemon = True
-    thread.start()
-    thread.join(timeout)
-
-    if thread.is_alive():
-        print("\nTime expired!")
-        return None
-    else:
-        return user_input[0]
-
 
 if __name__ == "__main__":
     # ----- PARSE TOOL OUTPUT -----
@@ -146,8 +141,8 @@ if __name__ == "__main__":
     # def display_difference_per_residue(tool_df)
     
     file_naccess, file_py = "Results/09-13-24/2c8r/2c8r.asa", "Results/06-21-2025/2c8r/SASA/output.asa"
-    compare_files_by_atom_and_column(file_naccess, file_py)
+    parse_files(file_naccess, file_py)
 
     # Example usage
-    response = timed_input("Enter something in 5 seconds: ", 5)
+    response = utils.timed_input("Enter something in 5 seconds: ", 5)
     print("Response:", response)
