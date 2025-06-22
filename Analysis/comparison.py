@@ -1,3 +1,4 @@
+""""""
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -6,6 +7,7 @@ import io
 import utils
 from collections import defaultdict
 import atomAnalysis
+import residueAnalysis
 
 # ----- INPUT DATA -----
 # Replace these with actual file reads (e.g., open("file.txt").read())
@@ -70,18 +72,25 @@ def display_difference_per_residue(tool_df):
     plt.tight_layout()
     plt.show()
 
+# --------------------------------------------------
+
+
+
 
 if __name__ == "__main__":
     # ----- PARSE TOOL OUTPUT -----
-    # tool_df = pd.read_csv(io.StringIO(tool_data), delim_whitespace=True)
-    # def display_difference_per_residue(tool_df)
+    tool_df = pd.read_csv(io.StringIO(tool_data), delim_whitespace=True)
+    display_difference_per_residue(tool_df)
+    
     atomAnalysis.main()
     
+    residueAnalysis.main()
 
-    # Example usage
-    # response = utils.timed_input("Enter something in 5 seconds: ", 5)
-    # print("Response:", response)
+    
 
+    sasa_header = ["REM",  "CHAIN", "ResID", "ResName", "TotalASA", "RSA(%)", "MainASA", "MainRSA(%)", "SideASA", "SideRSA(%)", "PolarASA", "PolarRSA", "ApolarASA", "ApolarRSA"]
+    naccesse_header = ["REM", "RES", "CHAIN", "NUM", "All-atoms-ASA", "All-atoms-RSA", "Total-Side-ASA", "Total-Side-RSA", "Main-Chain-ASA", "Main-Chain-RSA", "Non-polar-ASA", "Non-polar-RSA", "All-polar-ASA", "All-polar-RSA"]
+    
     # import time
 
     # def test_function():

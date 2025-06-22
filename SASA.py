@@ -4,6 +4,7 @@ import argparse
 import datetime
 from collections import defaultdict
 from pathlib import Path
+import display3d
 import logging
 logger = logging.getLogger(__name__)
 # create logger with '__name__'
@@ -388,7 +389,7 @@ def write_residue_asa_output(filename, res_asa, chain_stats, max_asa=MAX_ASA):
     """
     with open(filename, 'w') as f:
         f.write("\nResidue ASA and RSA:\n")
-        f.write(f"{'Chain':<5} {'ResID':<6} {'ResName':<7} "
+        f.write(f"REM  {'Chain':<5} {'ResID':<6} {'ResName':<7} "
                 f"{'TotalASA':<10} {'RSA(%)':<8} "
                 f"{'MainASA':<10} {'MainRSA(%)':<8} "
                 f"{'SideASA':<10} {'SideRSA(%)':<8} "
@@ -406,7 +407,7 @@ def write_residue_asa_output(filename, res_asa, chain_stats, max_asa=MAX_ASA):
             rsa_side = (side_chain / max_ref) * 100
             rsa_polar = (polar / max_ref) * 100
             rsa_apolar = (apolar / max_ref) * 100
-            f.write(f"{chain:<5} {res_id:<6} {res_name:<7} "
+            f.write(f"RES\t{chain:<5} {res_id:<6} {res_name:<7} "
                     f"{total:<10.2f} {rsa_total:<8.2f} "
                     f"{main_chain:<10.2f} {rsa_main:<10.2f} "
                     f"{side_chain:<10.2f} {rsa_side:<10.2f} "
