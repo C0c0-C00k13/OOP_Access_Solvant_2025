@@ -62,7 +62,7 @@ def parse_args():
     parser.add_argument("-i", "--hetero", choices=["y", "n"], default="n",
                         help="Include HETATM records (y/n), default: n")
     parser.add_argument("-n", "--points", type=int, default=POINTS_PER_SPHERE,
-                        help=f"Number of points representing the sphere, default: {PROBE_RADIUS}")
+                        help=f"Number of points representing the sphere, default: {POINTS_PER_SPHERE}")
     parser.add_argument("-o", "--output", type=str, default="output",
                         help="Name of the output file, default : output")
     parser.add_argument("-p", "--probe", type=float, default=PROBE_RADIUS,
