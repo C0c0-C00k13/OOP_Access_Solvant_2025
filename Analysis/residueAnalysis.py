@@ -64,17 +64,22 @@ def parse_sasapy_total_asa(file_py):
     return asa
 
 
-def plot_asa_comparison_by_type(naccess_asa, sasapy_asa, asa_type='total_asa'):
+def plot_asa_comparison_by_type(naccess_asa, sasapy_asa):
     """
     Plot ASA comparison for a specific ASA type between NACCESS and SASA.py.
     Color points based on ASA type.
     
     asa_type: 'total_asa', 'main_asa', 'side_asa', 'polar_asa', or 'apolar_asa'
     """
-    valid_types = ['total_asa', 'main_asa', 'side_asa', 'polar_asa', 'apolar_asa']
-    if asa_type not in valid_types:
-        raise ValueError(f"Invalid ASA type. Choose from {valid_types}")
-
+    valid_types = {'1':'total_asa', '2':'main_asa','3': 'side_asa','4': 'polar_asa','5' :'apolar_asa'}
+    response = utils.timed_input("Choose a type ofcomparison asa\n\
+1 : 'total_asa'\n\
+2 : 'main_asa'\n\
+3 : 'side_asa'\n\
+4 : 'polar_asa'\n\
+5 : 'apolar_asa'\n", timeout=20)
+    
+    asa_type = valid_types.get(response, 'total_asa')
     x_vals = []
     y_vals = []
     colors = []
@@ -123,7 +128,7 @@ def main():
     
     naccess_asa = parse_naccess_total_asa(file_naccess)
     sasapy_asa = parse_sasapy_total_asa(file_py)
-    print(naccess_asa)
-    print(sasapy_asa)
+    # print(naccess_asa)
+    # print(sasapy_asa)
 
-    plot_total_asa(naccess_asa, sasapy_asa)
+    plot_asa_comparison_by_type(naccess_asa, sasapy_asa)
