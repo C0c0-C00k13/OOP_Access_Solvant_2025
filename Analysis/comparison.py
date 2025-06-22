@@ -4,6 +4,8 @@ import seaborn as sns
 import re
 import io
 import utils
+from collections import defaultdict
+import atomAnalysis
 
 # ----- INPUT DATA -----
 # Replace these with actual file reads (e.g., open("file.txt").read())
@@ -26,72 +28,6 @@ B     27     THR     83.53      57.21    24.46      16.75      59.07       40.46
 B     28     PRO     102.92     71.97    26.79      18.73      76.13       53.24     
 """
 
-########################
-## PARSE ATOM RESULTS
-#######################
-
-def parse_files(file1:str,file2:str):
-    with open(file1) as f1, open(file2) as f2:
-        file1_lines = f1.readlines()
-        file2_lines = f2.readlines()
-
-    differences = compare_files_by_atom_and_column(file1_lines, file2_lines)
-    x_labels = [atom_diff[0] for atom_diff in differences]
-    diff = [atom_diff[1] for atom_diff in differences]
-    display_atom_asa_diff(x_labels, diff)
-
-
-def compare_files_by_atom_and_column(file1_lines, file2_lines):
-    result = []
-    
-    for line1, line2 in zip(file1_lines, file2_lines):
-        # Skip lines that aren't ATOM records
-        if not (line1.startswith("ATOM") and line2.startswith("ATOM")):
-            continue
-        
-        columns1 = line1.split()
-        columns2 = line2.split()
-
-        try:
-            atom = columns1[1]  
-            y1, y2 = float(columns1[9]), float(columns2[9])
-            diff = abs(y1 - y2)
-            result.append((atom, diff))
-        except (IndexError, ValueError):
-            continue  # Skip malformed lines
-
-    return result
-
-########################
-## PARSE ATOM RESULTS
-#######################
-
-def display_atom_asa_diff(x_labels, differences):
-    # Create bar plot
-    plt.figure(figsize=(10, 6))
-    bars = plt.bar(x_labels, differences, color='skyblue')
-    plt.xlabel('Atom (with index)')
-    plt.ylabel('Absolute Difference in ASA')
-    plt.title('Differences ASA Between NACCESS and SASA.py')
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    plt.grid(axis='y', linestyle='--', alpha=0.7)
-    
-    # Add hover interactivity
-    try:
-        import mplcursors
-        cursor = mplcursors.cursor(bars, hover=True)
-        @cursor.connect("add")
-        def on_add(sel):
-            sel.annotation.set_text(f"{x_labels[sel.index]}, {differences[sel.index]:.3f}")
-    except ImportError:
-        print("The 'mplcursors' module is not installed. You can install it with:")
-        print("pip install mplcursors")
-        mplcursors = None  # Optional: Set to None to check later
-
-        
-    # Show the plot
-    plt.show()
 
 ########################
 ## PARSE ATOM RESULTS
@@ -139,10 +75,17 @@ if __name__ == "__main__":
     # ----- PARSE TOOL OUTPUT -----
     # tool_df = pd.read_csv(io.StringIO(tool_data), delim_whitespace=True)
     # def display_difference_per_residue(tool_df)
+    atomAnalysis.main()
     
-    file_naccess, file_py = "Results/09-13-24/2c8r/2c8r.asa", "Results/06-21-2025/2c8r/SASA/output.asa"
-    parse_files(file_naccess, file_py)
 
     # Example usage
-    response = utils.timed_input("Enter something in 5 seconds: ", 5)
-    print("Response:", response)
+    # response = utils.timed_input("Enter something in 5 seconds: ", 5)
+    # print("Response:", response)
+
+    # import time
+
+    # def test_function():
+    #     time.sleep(2)  # Simulate a task taking 2 seconds
+
+    # durations = utils.repeat_and_time(test_function, n=3)
+
