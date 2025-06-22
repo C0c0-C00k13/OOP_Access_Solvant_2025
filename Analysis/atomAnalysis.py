@@ -1,5 +1,6 @@
 """Analyses of atom"""
 
+import utils
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
@@ -62,6 +63,58 @@ def display_atom_asa_diff(x_labels, y_values, colors):
 
     plt.show()
 
+def display_naccess_vs_sasa(naccess_data, sasa_data):
+    """
+    Plots NACCESS ASA (x-axis) vs SASA.py ASA (y-axis) per atom.
+    Labels each point and distinguishes missing data with color.
+    """
+    x_vals = []
+    y_vals = []
+    labels = []
+    colors = []
+
+    all_keys = set(naccess_data) | set(sasa_data)
+    for key in sorted(all_keys, key=lambda x: int(x.split('-')[0])):  # sort by atom number
+        nacc = naccess_data.get(key)
+        sasa = sasa_data.get(key)
+
+        # Only plot if both values are present
+        if nacc is not None and sasa is not None:
+            x_vals.append(nacc)
+            y_vals.append(sasa)
+            labels.append(key)
+            colors.append('purple')
+        elif nacc is not None:
+            x_vals.append(nacc)
+            y_vals.append(0)
+            labels.append(key)
+            colors.append('blue')
+        elif sasa is not None:
+            x_vals.append(0)
+            y_vals.append(sasa)
+            labels.append(key)
+            colors.append('red')
+
+    plt.figure(figsize=(10, 6))
+    scatter = plt.scatter(x_vals, y_vals, c=colors, s=30)
+
+    for i, label in enumerate(labels):
+        plt.text(x_vals[i] + 0.3, y_vals[i], label, fontsize=6, color='black', rotation=30)
+
+    plt.xlabel("ASA (NACCESS)")
+    plt.ylabel("ASA (SASA.py)")
+    plt.title("NACCESS vs SASA.py ASA Values per Atom")
+    plt.grid(True, linestyle='--', alpha=0.6)
+
+    legend_elements = [
+        Line2D([0], [0], marker='o', color='w', label='Both Present', markerfacecolor='purple', markersize=6),
+        Line2D([0], [0], marker='o', color='w', label='NACCESS Only', markerfacecolor='blue', markersize=6),
+        Line2D([0], [0], marker='o', color='w', label='SASA.py Only', markerfacecolor='red', markersize=6),
+    ]
+    plt.legend(handles=legend_elements, title="Data Availability", fontsize=8, title_fontsize=9)
+
+    plt.tight_layout()
+    plt.show()
 
 def main():
 
@@ -69,25 +122,26 @@ def main():
     naccess_data = parse_atom_asa(naccess_file)
     sasa_data = parse_atom_asa(sasa_file)
 
-    # Merge keys and prepare lists
-    all_keys = set(naccess_data) | set(sasa_data)
-    x_labels = []
-    y_values = []
-    colors = []
+    response = utils.timed_input("Select \n1 : naccess & sasa on the same axis\n\
+2 : naccess vs sasa\nDefault : naccess vs sasa\n", 7)
+    if response == '1':
+        # Merge keys and prepare lists
+        all_keys = set(naccess_data) | set(sasa_data)
+        x_labels = []
+        y_values = []
+        colors = []
 
-    for key in all_keys:
-        if key in naccess_data:
-            x_labels.append(key)
-            y_values.append(naccess_data[key])
-            colors.append('blue')
-        if key in sasa_data:
-            x_labels.append(key)
-            y_values.append(sasa_data[key])
-            colors.append('red')
-    
-    # print(all_keys)
-    # print(x_labels)
-    # print(y_values)
-    # print(colors)
-    # Display scatter plot
-    display_atom_asa_diff(x_labels, y_values, colors)
+        for key in all_keys:
+            if key in naccess_data:
+                x_labels.append(key)
+                y_values.append(naccess_data[key])
+                colors.append('blue')
+            if key in sasa_data:
+                x_labels.append(key)
+                y_values.append(sasa_data[key])
+                colors.append('red')
+        
+        # Display scatter plot
+        display_atom_asa_diff(x_labels, y_values, colors)
+    else:
+        display_naccess_vs_sasa(naccess_data, sasa_data)

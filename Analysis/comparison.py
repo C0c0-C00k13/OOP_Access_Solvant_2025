@@ -42,7 +42,7 @@ B     28     PRO     102.92     71.97    26.79      18.73      76.13       53.24
 
 if __name__ == "__main__":
 
-    # atomAnalysis.main()
+    atomAnalysis.main()
 
     residueAnalysis.main()
 

@@ -75,11 +75,8 @@ def plot_asa_comparison_by_type(naccess_asa, sasapy_asa):
     """
     valid_types = {'1':'total_asa', '2':'main_asa','3': 'side_asa','4': 'polar_asa','5' :'apolar_asa'}
     response = utils.timed_input("Choose a type of ASA comparison:\n\
-1 : 'total_asa'\n\
-2 : 'main_asa'\n\
-3 : 'side_asa'\n\
-4 : 'polar_asa'\n\
-5 : 'apolar_asa'\n", timeout=20)
+1 : 'total_asa'\n2 : 'main_asa'\n3 : 'side_asa'\n\
+4 : 'polar_asa'\n5 : 'apolar_asa'\nDefault : total_asa", timeout=20)
     
     asa_type = valid_types.get(response, 'total_asa')
 
