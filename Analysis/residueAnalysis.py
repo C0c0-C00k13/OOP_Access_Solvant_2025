@@ -64,15 +64,17 @@ def parse_sasapy_total_asa(file_py):
     return asa
 
 
+import matplotlib.pyplot as plt
+from matplotlib import cm
+from matplotlib.lines import Line2D
+
 def plot_asa_comparison_by_type(naccess_asa, sasapy_asa):
     """
-    Plot ASA comparison for a specific ASA type between NACCESS and SASA.py.
-    Color points based on ASA type.
-    
-    asa_type: 'total_asa', 'main_asa', 'side_asa', 'polar_asa', or 'apolar_asa'
+    Show both NACCESS and SASA.py ASA values on the same scatterplot.
+    Points are colored based on data source (NACCESS or SASA.py).
     """
     valid_types = {'1':'total_asa', '2':'main_asa','3': 'side_asa','4': 'polar_asa','5' :'apolar_asa'}
-    response = utils.timed_input("Choose a type ofcomparison asa\n\
+    response = utils.timed_input("Choose a type of ASA comparison:\n\
 1 : 'total_asa'\n\
 2 : 'main_asa'\n\
 3 : 'side_asa'\n\
@@ -80,46 +82,66 @@ def plot_asa_comparison_by_type(naccess_asa, sasapy_asa):
 5 : 'apolar_asa'\n", timeout=20)
     
     asa_type = valid_types.get(response, 'total_asa')
+
     x_vals = []
     y_vals = []
     colors = []
     labels = []
 
-    # Assign a color per unique chain
-    chain_ids = sorted({key[0] for key in naccess_asa.keys()} | {key[0] for key in sasapy_asa.keys()})
-    colormap = cm.get_cmap('tab10', len(chain_ids))
-    chain_color_map = {chain: colormap(i) for i, chain in enumerate(chain_ids)}
+    # Source-specific color
+    source_color = {
+        'NACCESS': 'blue',
+        'SASA.py': 'red'
+    }
 
-    common_keys = set(naccess_asa.keys()) & set(sasapy_asa.keys())
-    for key in sorted(common_keys):
+    # Use common residues
+    common_keys = sorted(set(naccess_asa.keys()) & set(sasapy_asa.keys()))
+    residue_indices = {key: idx for idx, key in enumerate(common_keys)}
+
+    for key in common_keys:
+        idx = residue_indices[key]
+        label = f"{key[0]}{key[1]}"
+
         try:
-            x = float(naccess_asa[key][asa_type])
-            y = float(sasapy_asa[key][asa_type])
-            x_vals.append(x)
-            y_vals.append(y)
-            colors.append(chain_color_map[key[0]])
-            labels.append(f"{key[0]}{key[1]}")
+            naccess_val = float(naccess_asa[key][asa_type])
+            x_vals.append(idx)
+            y_vals.append(naccess_val)
+            colors.append(source_color['NACCESS'])
+            labels.append(label)
         except (KeyError, ValueError):
-            continue  # Skip if data is missing or not a float
+            continue
 
-    plt.figure(figsize=(8, 8))
-    scatter = plt.scatter(x_vals, y_vals, color=colors, alpha=0.7, label=asa_type)
-    plt.xlabel(f"{asa_type.replace('_', ' ').title()} (NACCESS)")
-    plt.ylabel(f"{asa_type.replace('_', ' ').title()} (SASA.py)")
-    plt.title(f"{asa_type.replace('_', ' ').title()} Comparison per Residue")
+        try:
+            sasapy_val = float(sasapy_asa[key][asa_type])
+            x_vals.append(idx)
+            y_vals.append(sasapy_val)
+            colors.append(source_color['SASA.py'])
+            labels.append(label)
+        except (KeyError, ValueError):
+            continue
+
+    plt.figure(figsize=(10, 6))
+    plt.scatter(x_vals, y_vals, c=colors, alpha=0.7)
+
+    # Annotate every residue once (at the NACCESS point)
+    for i in range(0, len(x_vals), 2):  # step by 2 to only annotate once per residue
+        plt.annotate(labels[i], (x_vals[i], y_vals[i]), textcoords="offset points", xytext=(3, 3), fontsize=8)
+
+    plt.xticks(range(len(common_keys)), [f"{k[0]}{k[1]}" for k in common_keys], rotation=45)
+    plt.ylabel(f"{asa_type.replace('_', ' ').title()} Value")
+    plt.title(f"{asa_type.replace('_', ' ').title()} – NACCESS vs SASA.py")
     plt.grid(True)
 
-    # Annotate each point
-    for i, label in enumerate(labels):
-        plt.annotate(label, (x_vals[i], y_vals[i]), textcoords="offset points", xytext=(3, 3), ha='left', fontsize=8)
+    # Legend
+    legend_elements = [
+        Line2D([0], [0], marker='o', color='w', label='NACCESS', markerfacecolor='blue', markersize=8),
+        Line2D([0], [0], marker='o', color='w', label='SASA.py', markerfacecolor='red', markersize=8)
+    ]
+    plt.legend(handles=legend_elements, title="Data Source", loc="upper right")
 
-    # Add legend for ASA type
-    handles = [plt.Line2D([0], [0], marker='o', color='w', label=chain,
-                          markerfacecolor=color, markersize=8)
-               for chain, color in chain_color_map.items()]
-    plt.legend(handles=handles, title="Chain ID", loc="best")
     plt.tight_layout()
     plt.show()
+
 
 
 def main():

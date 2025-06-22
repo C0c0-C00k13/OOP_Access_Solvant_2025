@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import utils
 from collections import defaultdict
 
+
 ########################
 ## PARSE ATOM RESULTS
 #######################
@@ -105,6 +106,52 @@ def display_atom_asa_diff(x_labels, differences):
         print("pip install mplcursors")
         mplcursors = None  # Optional: Set to None to check later
 
+
+import matplotlib.pyplot as plt
+
+def parse_asa_file(file_path):
+    """
+    Parses the file and extracts atom number, atom name, and ASA.
+    """
+    atom_labels = []
+    asa_values = []
+
+    with open(file_path, 'r') as file:
+        for line in file:
+            if line.startswith("ATOM"):
+                parts = line.split()
+                if len(parts) >= 9:
+                    atom_num = parts[1]
+                    atom_name = parts[2]
+                    asa = float(parts[8])
+                    label = f"{atom_num}_{atom_name}"
+                    atom_labels.append(label)
+                    asa_values.append(asa)
+    return atom_labels, asa_values
+
+def display_atom_asa_diff(x_labels, differences):
+    # Create scatter plot
+    plt.figure(figsize=(10, 6))
+    scatters = plt.scatter(range(len(x_labels)), differences, color='skyblue')
+    plt.xlabel('Atom (with index)')
+    plt.ylabel('ASA')
+    plt.title('ASA per Atom from File')
+    plt.xticks(range(len(x_labels)), x_labels, rotation=45)
+    plt.tight_layout()
+    plt.grid(axis='y', linestyle='--', alpha=0.7)
+
+    # Add hover interactivity
+    try:
+        import mplcursors
+        cursor = mplcursors.cursor(scatters, hover=True)
+        @cursor.connect("add")
+        def on_add(sel):
+            sel.annotation.set_text(f"{x_labels[sel.index]}, ASA: {differences[sel.index]:.3f}")
+    except ImportError:
+        print("The 'mplcursors' module is not installed. You can install it with:\npip install mplcursors")
+
+    plt.show()
+
         
     # Show the plot
     plt.show()
@@ -112,3 +159,10 @@ def display_atom_asa_diff(x_labels, differences):
 def main():
     file_naccess, file_py = "Results/09-13-24/2c8r/2c8r.asa", "Results/06-21-2025/2c8r/SASA/output.asa"
     parse_files(file_naccess, file_py)
+
+    # Usage example
+    file_naccess, file_py = "Results/09-13-24/2c8r/2c8r.asa", "Results/06-21-2025/2c8r/SASA/output.asa"
+    naccess_atom_labels, naccess_asa_values = parse_asa_file(file_naccess)
+    sasa_atom_labels, sasa_asa_values = parse_asa_file(file_py)
+    display_atom_asa_diff(naccess_atom_labels, naccess_asa_values)
+    display_atom_asa_diff(sasa_atom_labels, sasa_asa_values)
