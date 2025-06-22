@@ -35,58 +35,18 @@ B     28     PRO     102.92     71.97    26.79      18.73      76.13       53.24
 ## PARSE ATOM RESULTS
 #######################
 
-def display_difference_per_residue(tool_df):
-    # ----- PARSE NACCESS OUTPUT -----
-    naccess_pattern = r"RES (\w{3}) (\w) +(\d+) +([\d.]+) +([\d.]+)"
-    matches = re.findall(naccess_pattern, naccess_data)
-    naccess_df = pd.DataFrame(matches, columns=["ResName", "Chain", "ResID", "ASA", "RSA"])
-    naccess_df["ResID"] = naccess_df["ResID"].astype(int)
-    naccess_df["ASA"] = naccess_df["ASA"].astype(float)
-    naccess_df["RSA"] = naccess_df["RSA"].astype(float)
-
-    # ----- MERGE -----
-    merged = pd.merge(tool_df, naccess_df, on=["Chain", "ResID", "ResName"], suffixes=('_tool', '_naccess'))
-
-    # ----- CALCULATE DIFFERENCES -----
-    merged["ASA_diff"] = merged["TotalASA"] - merged["ASA"]
-    merged["RSA_diff"] = merged["RSA(%)"] - merged["RSA"]
-    merged["ASA_abs_diff"] = merged["ASA_diff"].abs()
-    merged["RSA_abs_diff"] = merged["RSA_diff"].abs()
-
-    # ----- PLOTTING -----
-    sns.set_theme(style="whitegrid")
-    fig, axes = plt.subplots(1, 2, figsize=(14, 6))
-
-    # ASA Plot
-    sns.scatterplot(data=merged, x="ASA_abs_diff", y="ASA_diff", hue="ResName", ax=axes[0])
-    axes[0].set_title("ASA Difference vs Absolute Difference")
-    axes[0].set_xlabel("Absolute ASA Difference")
-    axes[0].set_ylabel("ASA Difference")
-
-    # RSA Plot
-    sns.scatterplot(data=merged, x="RSA_abs_diff", y="RSA_diff", hue="ResName", ax=axes[1])
-    axes[1].set_title("RSA Difference vs Absolute Difference")
-    axes[1].set_xlabel("Absolute RSA Difference")
-    axes[1].set_ylabel("RSA Difference")
-
-    plt.tight_layout()
-    plt.show()
-
 # --------------------------------------------------
 
 
 
 
 if __name__ == "__main__":
-    # ----- PARSE TOOL OUTPUT -----
-    tool_df = pd.read_csv(io.StringIO(tool_data), delim_whitespace=True)
-    display_difference_per_residue(tool_df)
-    
-    atomAnalysis.main()
-    
+
+    # atomAnalysis.main()
+
     residueAnalysis.main()
 
-    
+
 
     sasa_header = ["REM",  "CHAIN", "ResID", "ResName", "TotalASA", "RSA(%)", "MainASA", "MainRSA(%)", "SideASA", "SideRSA(%)", "PolarASA", "PolarRSA", "ApolarASA", "ApolarRSA"]
     naccesse_header = ["REM", "RES", "CHAIN", "NUM", "All-atoms-ASA", "All-atoms-RSA", "Total-Side-ASA", "Total-Side-RSA", "Main-Chain-ASA", "Main-Chain-RSA", "Non-polar-ASA", "Non-polar-RSA", "All-polar-ASA", "All-polar-RSA"]

@@ -17,8 +17,8 @@ def parse_files(file1:str,file2:str):
     response = utils.timed_input(f"Enter something in {timelimit} seconds:\n\
 avg : average ASA of each atom_name\n\
 default : for ASA of each atom\t", timelimit)
-    if response.lower() == "avg" :
-        differences = mean_column10_by_atom(file1_lines, file2_lines)
+    if response.lower() is not None and response.lower() == "avg" :
+        differences = mean_asa_by_atom(file1_lines, file2_lines)
         x_labels = differences.keys()
         diff = differences.values()
     else:
@@ -50,7 +50,7 @@ def compare_files_by_atom_and_column(file1_lines, file2_lines):
     return result
 
 
-def mean_column10_by_atom(file1_lines, file2_lines):
+def mean_asa_by_atom(file1_lines, file2_lines):
     atom_values = defaultdict(list)
 
     for line1, line2 in zip(file1_lines, file2_lines):
