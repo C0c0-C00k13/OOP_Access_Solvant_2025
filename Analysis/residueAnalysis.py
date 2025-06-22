@@ -85,14 +85,10 @@ def plot_asa_comparison_by_type(naccess_asa, sasapy_asa):
     colors = []
     labels = []
 
-    # Define a color map for each ASA type
-    asa_color_map = {
-        'total_asa': 'blue',
-        'main_asa': 'green',
-        'side_asa': 'orange',
-        'polar_asa': 'purple',
-        'apolar_asa': 'red'
-    }
+    # Assign a color per unique chain
+    chain_ids = sorted({key[0] for key in naccess_asa.keys()} | {key[0] for key in sasapy_asa.keys()})
+    colormap = cm.get_cmap('tab10', len(chain_ids))
+    chain_color_map = {chain: colormap(i) for i, chain in enumerate(chain_ids)}
 
     common_keys = set(naccess_asa.keys()) & set(sasapy_asa.keys())
     for key in sorted(common_keys):
@@ -101,7 +97,7 @@ def plot_asa_comparison_by_type(naccess_asa, sasapy_asa):
             y = float(sasapy_asa[key][asa_type])
             x_vals.append(x)
             y_vals.append(y)
-            colors.append(asa_color_map[asa_type])
+            colors.append(chain_color_map[key[0]])
             labels.append(f"{key[0]}{key[1]}")
         except (KeyError, ValueError):
             continue  # Skip if data is missing or not a float
@@ -118,7 +114,10 @@ def plot_asa_comparison_by_type(naccess_asa, sasapy_asa):
         plt.annotate(label, (x_vals[i], y_vals[i]), textcoords="offset points", xytext=(3, 3), ha='left', fontsize=8)
 
     # Add legend for ASA type
-    plt.legend(title="ASA Type")
+    handles = [plt.Line2D([0], [0], marker='o', color='w', label=chain,
+                          markerfacecolor=color, markersize=8)
+               for chain, color in chain_color_map.items()]
+    plt.legend(handles=handles, title="Chain ID", loc="best")
     plt.tight_layout()
     plt.show()
 
