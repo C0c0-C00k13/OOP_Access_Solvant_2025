@@ -63,50 +63,6 @@ def parse_sasapy_total_asa(file_py):
                         continue
     return asa
 
-def plot_total_asa(naccess_asa, sasapy_asa):
-    """
-    Plot total ASA from NACCESS vs SASA.py for residues present in both,
-    coloring points by chain ID (1st element of the key).
-    """
-    x_vals = []
-    y_vals = []
-    colors = []
-    labels = []
-
-    # Assign a color per unique chain
-    chain_ids = sorted({key[0] for key in naccess_asa.keys()} | {key[0] for key in sasapy_asa.keys()})
-    colormap = cm.get_cmap('tab10', len(chain_ids))
-    chain_color_map = {chain: colormap(i) for i, chain in enumerate(chain_ids)}
-
-    # Use residues present in both
-    common_keys = set(naccess_asa.keys()) & set(sasapy_asa.keys())
-    for key in sorted(common_keys):
-        x = naccess_asa[key]
-        y = sasapy_asa[key]
-        x_vals.append(x)
-        y_vals.append(y)
-        colors.append(chain_color_map[key[0]])
-        labels.append(f"{key[0]}{key[1]}")
-
-    plt.figure(figsize=(8, 8))
-    scatter = plt.scatter(x_vals, y_vals, color=colors, alpha=0.7)
-    plt.xlabel("Total ASA (NACCESS)")
-    plt.ylabel("Total ASA (SASA.py)")
-    plt.title("Total ASA Comparison per Residue")
-    plt.grid(True)
-
-    # Annotate each point with residue label
-    for i, label in enumerate(labels):
-        plt.annotate(label, (x_vals[i], y_vals[i]), textcoords="offset points", xytext=(3, 3), ha='left', fontsize=8)
-
-    # Create a legend for chains
-    handles = [plt.Line2D([0], [0], marker='o', color='w', label=chain,
-                          markerfacecolor=color, markersize=8)
-               for chain, color in chain_color_map.items()]
-    plt.legend(handles=handles, title="Chain ID", loc="best")
-
-    plt.tight_layout()
-    plt.show()
 
 def plot_asa_comparison_by_type(naccess_asa, sasapy_asa, asa_type='total_asa'):
     """
