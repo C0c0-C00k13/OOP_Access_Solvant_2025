@@ -27,12 +27,36 @@ Results are ordered in based on the date of the creation of the file (e.i. : 'Re
 		- <output>.log : Contains details of the execution (e.i : date of exection, parameters etc.)
 
 
-## Let's get started
-### Run NACCESS
-```bash
+***********************************
+Let's get started
+***********************************
+Run NACCESS
+In a terminal, enter :
 $ ./naccess ./Data/2c8r.pdb
 naccess pdb_file [-p probe_size] [-r vdw_file] [-s stdfile] [-z zslice] -[hwyfaclqb]
+
+Run SASA.py
+Check that the virtual environment 'environment' exists:
+$ conda env list
+If not, create the virtual environment with the line:
+$ conda create -f 
+
+Activate the environment:
+$ conda activate environment
+
+$ ./naccess projet-court-POO/Data/2c8r.pdb
+naccess: using vdw.radii in local directory
+naccess: using STD FILE in local directory
+$ mkdir 2c8r
+$ mv -i 2c8r.* 2c8r/
+$ mv -i 2c8r/ Results/"$(date +"%m-%d-%y")"
 
 ```bash
 $ python SASA.py [-h] [-i {y,n}] [-n POINTS] [-o OUTPUT] [-p PROBE] [-r RADII] pdb_file
  
+pdb_file = PDB file to process.
+-i/ --hetero = Include heteratoms while calculating the ASA. Default set to n(o).
+-n/ --points = Number of points used to represent a sphere. Default set 92.
+-o/ --output = Name of the output files. Default set to 'output'
+-p/ "-probe  = radius of the probe. Default value set to 1.4.
+-r/ --radii  = Include a customize radii file. Default is set to None.

@@ -4,7 +4,6 @@ import argparse
 import datetime
 from collections import defaultdict
 from pathlib import Path
-import display3d
 import logging
 logger = logging.getLogger(__name__)
 # create logger with '__name__'
