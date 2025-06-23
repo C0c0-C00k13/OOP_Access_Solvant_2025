@@ -76,7 +76,7 @@ def plot_asa_comparison_by_type(naccess_asa, sasapy_asa):
     valid_types = {'1':'total_asa', '2':'main_asa','3': 'side_asa','4': 'polar_asa','5' :'apolar_asa'}
     response = utils.timed_input("Choose a type of ASA comparison:\n\
 1 : 'total_asa'\n2 : 'main_asa'\n3 : 'side_asa'\n\
-4 : 'polar_asa'\n5 : 'apolar_asa'\nDefault : total_asa", timeout=20)
+4 : 'polar_asa'\n5 : 'apolar_asa'\nDefault : total_asa\n", timeout=20)
     
     asa_type = valid_types.get(response, 'total_asa')
 
@@ -142,11 +142,13 @@ def plot_asa_comparison_by_type(naccess_asa, sasapy_asa):
 
 
 def main():
-    file_naccess, file_py = "Results/09-13-24/2c8r/2c8r.rsa", "Results/06-22-2025/2c8r/SASA/output.rsa"
-    
+    file_naccess = "Results/09-13-24/2c8r/2c8r.rsa"
+    file_py = "Results/06-22-2025/2c8r/SASA/output.rsa"
+
     naccess_asa = parse_naccess_total_asa(file_naccess)
     sasapy_asa = parse_sasapy_total_asa(file_py)
-    # print(naccess_asa)
-    # print(sasapy_asa)
 
     plot_asa_comparison_by_type(naccess_asa, sasapy_asa)
+
+if __name__ == "__main__":
+    main()

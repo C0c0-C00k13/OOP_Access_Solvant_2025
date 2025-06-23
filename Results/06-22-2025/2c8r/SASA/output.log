@@ -1,0 +1,18 @@
+DATE                          : 06-22-2025 14:16:29
+
+****************************************
+INPUT
+PDB FILE                      : Data/2c8r.pdb
+****************************************
+
+INCLUDE HETATM                : NO
+POINTS PER SPHERE             : 92
+PROBE RADIUS                  : 1.4
+Custom radii file             : None
+
+****************************************
+OUTPUT
+****************************************
+
+ACCESSIBLE SURFACE RESIDUE    : './Results/06-22-2025/2c8r/SASA/output.rsa'
+ACCESSIBLE SURFACE ATOM       : './Results/06-22-2025/2c8r/SASA/output.asa'

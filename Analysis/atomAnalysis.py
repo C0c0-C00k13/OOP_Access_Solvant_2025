@@ -140,8 +140,11 @@ def main():
                 x_labels.append(key)
                 y_values.append(sasa_data[key])
                 colors.append('red')
-        
+
         # Display scatter plot
         display_atom_asa_diff(x_labels, y_values, colors)
     else:
         display_naccess_vs_sasa(naccess_data, sasa_data)
+
+if __name__ == "__main__":
+    main()
