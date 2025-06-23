@@ -20,8 +20,10 @@ if __name__ == "__main__":
 
     # residueAnalysis.main()
 
-    durations = utils.repeat_and_time(SASA.main, n=5)
-    print(durations)
+    durations_short_protein = utils.repeat_and_time(SASA.main, n=5)
+    durations_medium_protein = utils.repeat_and_time(SASA.main, n=5)
+    durations_long_protein = utils.repeat_and_time(SASA.main, n=5)
+    print(durations_short_protein, durations_medium_protein, durations_long_protein)
 
 
 

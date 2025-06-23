@@ -1,15 +1,38 @@
-Ce répertoire contient l'ensemble des scripts et documents utilisés pour réaliser le calcul de surface de protéine exposée au solvant.
+This repository contains the executable files* and data to calculate the Solvant Accessible Surface Area of a protein. 
+* NACCESS v2.1.1 has been downloaded from the [official site](https://www.bioinf.manchester.ac.uk/naccess/)
 
-Le projet a été réalisé dans un environnement conda sous un système Linux.
-
+The project has been done in Linux OS and a virtual environment (conda version 24.9.1).
 - Data :
-	- environment.yml : fichier YAML contenant les dependencies utilisées pour le calcul
-	- Insuline.pdb : fichier PDB test utilisé pour calculer la sur
-    - 2oe4.pdb : ficheir PDB représentant une structure du lyzozyme
-    - 2c8r.pdb : fichier PDB représentant une structure de l'insuline
+	- environment.yml : YAML files contaning the dependencies used to execute the files.
+	- Insuline.pdb : Insuline(60sec) and UV laser excited fluorescence.
+    - 2oe4.pdb : High Pressure Psuedo Wild Type T4 Lysozyme.
+    - 2c8r.pdb : Insuline(60sec) and UV laser excited fluorescence. (recommended for testing the functions) 
+	- 1bj5.pdb : HUMAN SERUM ALBUMIN COMPLEXED WITH MYRISTIC ACID.
+	- 1c26.pdb : CRYSTAL STRUCTURE OF P53 TETRAMERIZATION DOMAIN.
+	- 6pwf.pdb : Cryo-EM structure of the ATPase domain of chromatin remodeling factor ISWI bound to the nucleosome 
  
-- Results : Contient les résultats de calculs effectués avec le programme NACCESS v2.1.1
+- Results : Repertory containing the results from NACCESS v2.1.1 & SASA.py.
+Results are ordered in based on the date of the creation of the file (e.i. : 'Results/06-22-2025'), the PDB accession of the protein ('Results/06-22-25/2c8r') and the file used to calculate the ASA ('Results/06-22-2025/2c8r/SASA'). 
+
+- Analysis : Python scripts to evaluate and compare the
+	- comparison.py : Execute the comparisons between naccess and SASA.py
+	- atomAnalysis.py : Contains functions related to the analysis of ASA of atoms.
+	- residueAnalysis.py : Contains functions related to the analysis of ASA of residues.
+	- utils : Contains functions usable for other context than atom or residue (e.i. timed_input function : Prompts the user to give an input within a specific duration).
 
 - Execution :
- 	- Project_final.py : fichier d'exécution. Réalise l'ensemble des calculs.
+ 	- SASA.py : Execution file. Calculates the ASA of the protein (input) and returns 3 output files :
+		- <output>.asa : Atom-level ASA.
+		- <output>.rsa : Contains Residue-level ASA.
+		- <output>.log : Contains details of the execution (e.i : date of exection, parameters etc.)
+
+
+## Let's get started
+### Run NACCESS
+```bash
+$ ./naccess ./Data/2c8r.pdb
+naccess pdb_file [-p probe_size] [-r vdw_file] [-s stdfile] [-z zslice] -[hwyfaclqb]
+
+```bash
+$ python SASA.py [-h] [-i {y,n}] [-n POINTS] [-o OUTPUT] [-p PROBE] [-r RADII] pdb_file
  
