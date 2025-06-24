@@ -14,15 +14,12 @@ labels = ['2c8r', '2oe4', '1c26', '1bj5', '6pwf']
 # X-axis positions (indices)
 positions = list(range(1,6))
 
-# Second X-axis reference (linked number for each list)
-reference_x = [10, 20, 30, 40, 50]  # You can change these values to reflect your context
-
 # --- Plot 1: Values vs Index ---
 plt.figure(figsize=(10, 5))
 for i, lst in enumerate(lists):
     plt.scatter(positions, lst, label=labels[i], color=colors[i])
-plt.title('Scatter Plot: Values vs Position')
-plt.xlabel('Number of Run')
+plt.title('Scatter Plot: Duration vs Running Loop')
+plt.xlabel('Number of Loop')
 plt.ylabel('Time (s)')
 plt.legend()
 plt.grid(True)
