@@ -1,0 +1,18 @@
+DATE                          : 06-24-2025 05:54:13
+
+****************************************
+INPUT
+PDB FILE                      : Data/6pwf.pdb
+****************************************
+
+INCLUDE HETATM                : NO
+POINTS PER SPHERE             : 92
+PROBE RADIUS                  : 1.4
+Custom radii file             : None
+
+****************************************
+OUTPUT
+****************************************
+
+ACCESSIBLE SURFACE RESIDUE    : './Results/SASA/06-24-2025/6pwf/output.rsa'
+ACCESSIBLE SURFACE ATOM       : './Results/SASA/06-24-2025/6pwf/output.asa'

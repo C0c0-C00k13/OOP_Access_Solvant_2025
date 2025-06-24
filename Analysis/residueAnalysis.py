@@ -142,8 +142,12 @@ def plot_asa_comparison_by_type(naccess_asa, sasapy_asa):
 
 
 def main():
-    file_naccess = "Results/09-13-24/2c8r/2c8r.rsa"
-    file_py = "Results/06-22-2025/2c8r/SASA/output.rsa"
+    PDB_IDS = {'1':'1bj5', '2':'1c26', '3' : '2c8r', '4' : '2oe4', '5' : '6pwf'}
+    response = utils.timed_input("Choose a PDB ID:\n\
+1':'1bj5'\n'2':'1c26'\n'3' : '2c8r'\n'4' : '2oe4'\n'5' : '6pwf'\n",10)
+    pdb_id = PDB_IDS.get(response,'2c8r')
+    file_naccess = f"Results/NACCESS/{pdb_id}/{pdb_id}.rsa"
+    file_py = f"Results/SASA/06-24-2025/{pdb_id}/output.rsa"
 
     naccess_asa = parse_naccess_total_asa(file_naccess)
     sasapy_asa = parse_sasapy_total_asa(file_py)

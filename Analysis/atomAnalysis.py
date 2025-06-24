@@ -118,7 +118,12 @@ def display_naccess_vs_sasa(naccess_data, sasa_data):
 
 def main():
 
-    naccess_file, sasa_file = "Results/09-13-24/2c8r/2c8r.asa", "Results/06-21-2025/2c8r/SASA/output.asa"
+    PDB_IDS = {'1':'1bj5', '2':'1c26', '3' : '2c8r', '4' : '2oe4', '5' : '6pwf'}
+    response = utils.timed_input("Choose a PDB ID:\n\
+1':'1bj5'\n'2':'1c26'\n'3' : '2c8r'\n'4' : '2oe4'\n'5' : '6pwf'\n",10)
+    pdb_id = PDB_IDS.get(response,'2c8r')
+    naccess_file = f"Results/NACCESS/{pdb_id}/{pdb_id}.asa"
+    sasa_file = f"Results/SASA/06-24-2025/{pdb_id}/output.asa"
     naccess_data = parse_atom_asa(naccess_file)
     sasa_data = parse_atom_asa(sasa_file)
 
