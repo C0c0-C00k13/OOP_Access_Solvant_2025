@@ -513,7 +513,7 @@ def main():
 
 
     # Prepare output files
-    path_result_directory = f"./Results/{today.split()[0]}/{pdb_file.strip().split('/')[-1][:-4]}/SASA"
+    path_result_directory = f"./Results/SASA/{today.split()[0]}/{pdb_file.strip().split('/')[-1][:-4]}"
     nested_directory_path = Path(path_result_directory)
     nested_directory_path.mkdir(parents=True, exist_ok=True)
 

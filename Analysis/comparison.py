@@ -16,15 +16,15 @@ import SASA
 
 if __name__ == "__main__":
 
-    # atomAnalysis.main()
+    atomAnalysis.main()
 
-    # residueAnalysis.main()
+    residueAnalysis.main()
 
     durations = utils.repeat_and_time(SASA.main, n=5)
     print(durations)
 
 
 
-    sasa_header = ["REM",  "CHAIN", "ResID", "ResName", "TotalASA", "RSA(%)", "MainASA", "MainRSA(%)", "SideASA", "SideRSA(%)", "PolarASA", "PolarRSA", "ApolarASA", "ApolarRSA"]
-    naccesse_header = ["REM", "RES", "CHAIN", "NUM", "All-atoms-ASA", "All-atoms-RSA", "Total-Side-ASA", "Total-Side-RSA", "Main-Chain-ASA", "Main-Chain-RSA", "Non-polar-ASA", "Non-polar-RSA", "All-polar-ASA", "All-polar-RSA"]
+    # sasa_header = ["REM",  "CHAIN", "ResID", "ResName", "TotalASA", "RSA(%)", "MainASA", "MainRSA(%)", "SideASA", "SideRSA(%)", "PolarASA", "PolarRSA", "ApolarASA", "ApolarRSA"]
+    # naccesse_header = ["REM", "RES", "CHAIN", "NUM", "All-atoms-ASA", "All-atoms-RSA", "Total-Side-ASA", "Total-Side-RSA", "Main-Chain-ASA", "Main-Chain-RSA", "Non-polar-ASA", "Non-polar-RSA", "All-polar-ASA", "All-polar-RSA"]
 
